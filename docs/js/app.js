@@ -1,7 +1,6 @@
 "use strict";
 
 let ELEMENTS = [];
-let EQUIPMENT = [];
 
 const state = {
   symbol: "Si",
@@ -267,7 +266,7 @@ async function init() {
     const res = await fetch(assetUrl("data/elements.json"));
     if (!res.ok) throw new Error(`elements.json HTTP ${res.status}`);
     ELEMENTS = await res.json();
-    EQUIPMENT = equipmentCatalog();
+    // EQUIPMENT already defined in simulation.js
     state.equipment = EQUIPMENT[0].key;
   } catch (err) {
     console.error(err);

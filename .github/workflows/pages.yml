@@ -1,11 +1,9 @@
 # Deploy the static simulator in docs/ to GitHub Pages.
+# Do not run on every push: Pages must be enabled in repo Settings first,
+# otherwise the job fails and the PR looks broken.
 name: Deploy GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-      - cursor/github-pages-static-0f05
   workflow_dispatch:
 
 permissions:

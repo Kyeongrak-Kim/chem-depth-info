@@ -2,7 +2,9 @@
 
 화학 분석 장비에 따른 주기율표에서 선택된 원소가 얼마나 깊이, 넓게 파고 들어가는지 시뮬레이션으로 알아보는 Web app. 모바일/데스크톱 양쪽을 지원합니다.
 
-**공개 사이트 (GitHub Pages, 무료):** https://kyeongrak-kim.github.io/chem-depth-info/
+**지금 바로 열기:** [정적 시뮬레이터 미리보기](https://raw.githack.com/Kyeongrak-Kim/chem-depth-info/cursor/github-pages-static-0f05/docs/index.html)
+
+공식 GitHub Pages 주소(`https://kyeongrak-kim.github.io/chem-depth-info/`)는 저장소 소유자가 [Pages 설정](https://github.com/Kyeongrak-Kim/chem-depth-info/settings/pages)에서 한 번 켜야 살아납니다. 이 에이전트 토큰으로는 Pages를 켤 수 없습니다.
 
 ## 개요
 
@@ -37,7 +39,12 @@ python app.py            # http://localhost:5000
 
 ## GitHub Pages
 
-정적 사이트는 `docs/` 에 있습니다. `main`에 머지되면 [GitHub Actions](.github/workflows/pages.yml)가 [https://kyeongrak-kim.github.io/chem-depth-info/](https://kyeongrak-kim.github.io/chem-depth-info/) 로 배포합니다.
+정적 사이트는 `docs/` 에 있습니다. 주소는 [https://kyeongrak-kim.github.io/chem-depth-info/](https://kyeongrak-kim.github.io/chem-depth-info/) 입니다.
+
+저장소 소유자가 [Pages 설정](https://github.com/Kyeongrak-Kim/chem-depth-info/settings/pages)에서 한 번 켜 줘야 공개됩니다.
+
+1. **바로 켜기:** Source를 **Deploy from a branch** 로 두고, Branch를 `cursor/github-pages-static-0f05`(머지 후에는 `main`), Folder를 `/docs` 로 저장합니다.
+2. **Actions로 켜기:** Source를 **GitHub Actions** 로 저장한 뒤 `main`에 머지하거나 workflow를 수동 실행합니다.
 
 로컬에서 정적 버전만 보려면:
 
