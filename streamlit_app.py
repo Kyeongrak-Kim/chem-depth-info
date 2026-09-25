@@ -19,6 +19,7 @@ from app.display import (
     header_html,
     periodic_table_html,
     results_html,
+    shots_head_html,
 )
 from app.simulation import EQUIPMENT, equipment_catalog, simulate
 
@@ -41,19 +42,20 @@ if eq_key not in valid_eq:
 
 eq = EQUIPMENT[eq_key]
 energy = st.session_state.get(f"energy-{eq_key}", float(eq.default_energy))
+shots = st.session_state.get(f"shots-{eq_key}", int(eq.default_shots))
 
 st.markdown(
     f'<section class="cd-panel">{periodic_table_html(elements, symbol, eq_key)}</section>',
     unsafe_allow_html=True,
 )
 
-controls, results = st.columns((0.9, 1.1), gap="medium")
+controls, results = st.columns((0.95, 1.05), gap="medium")
 
 with controls:
     st.markdown(equipment_html(catalog, eq_key, symbol), unsafe_allow_html=True)
-    st.markdown(energy_head_html(energy), unsafe_allow_html=True)
+    st.markdown(energy_head_html(energy, eq.energy_label, eq.energy_unit), unsafe_allow_html=True)
     energy = st.slider(
-        "빔 에너지",
+        eq.energy_label,
         min_value=float(eq.min_energy),
         max_value=float(eq.max_energy),
         value=float(eq.default_energy),
@@ -62,12 +64,30 @@ with controls:
         label_visibility="collapsed",
     )
     st.markdown(
-        f'<div class="cd-energy-scale"><span>{eq.min_energy:g} keV</span>'
-        f"<span>{eq.max_energy:g} keV</span></div>"
-        f'<p class="cd-desc">{eq.description}</p>',
+        f'<div class="cd-energy-scale"><span>{eq.min_energy:g} {eq.energy_unit}</span>'
+        f"<span>{eq.max_energy:g} {eq.energy_unit}</span></div>",
         unsafe_allow_html=True,
     )
+    if eq.uses_shots:
+        st.markdown(shots_head_html(shots), unsafe_allow_html=True)
+        shots = st.slider(
+            "Shot 수",
+            min_value=int(eq.min_shots),
+            max_value=int(eq.max_shots),
+            value=int(eq.default_shots),
+            step=1,
+            key=f"shots-{eq_key}",
+            label_visibility="collapsed",
+        )
+        st.markdown(
+            f'<div class="cd-energy-scale"><span>{eq.min_shots}</span>'
+            f"<span>{eq.max_shots}</span></div>",
+            unsafe_allow_html=True,
+        )
+        result = simulate(by_symbol[symbol], eq_key, energy, shots)
+    else:
+        result = simulate(by_symbol[symbol], eq_key, energy)
+    st.markdown(f'<p class="cd-desc">{eq.description}</p>', unsafe_allow_html=True)
 
 with results:
-    result = simulate(by_symbol[symbol], eq_key, energy)
     st.markdown(results_html(result, symbol), unsafe_allow_html=True)

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1020" />
+  <meta name="theme-color" content="#080d1c" />
   <title>chem-depth-info · 화학 분석 깊이 시뮬레이터</title>
   <script>
     (function () {
@@ -39,13 +39,23 @@
 
       <div class="energy-block">
         <div class="energy-head">
-          <h3>3 · 빔 에너지</h3>
+          <h3 id="energy-title">3 · 빔 에너지</h3>
           <span id="energy-readout" class="pill pill-accent">— keV</span>
         </div>
         <input type="range" id="energy-slider" min="0" max="1" step="0.01" value="0" />
         <div class="energy-scale"><span id="energy-min">—</span><span id="energy-max">—</span></div>
-        <p id="equipment-desc" class="equipment-desc"></p>
       </div>
+
+      <div class="shots-block" id="shots-block" hidden>
+        <div class="energy-head">
+          <h3>4 · Shot 수</h3>
+          <span id="shots-readout" class="pill pill-accent">—</span>
+        </div>
+        <input type="range" id="shots-slider" min="1" max="100" step="1" value="1" />
+        <div class="energy-scale"><span id="shots-min">—</span><span id="shots-max">—</span></div>
+      </div>
+
+      <p id="equipment-desc" class="equipment-desc"></p>
     </section>
 
     <section class="panel result-panel">
@@ -63,8 +73,12 @@
           <span class="metric-label">종횡비 (깊이/폭)</span>
           <span class="metric-value" id="m-aspect">—</span>
         </div>
+        <div class="metric" id="shots-metric" hidden>
+          <span class="metric-label">Shot 수</span>
+          <span class="metric-value" id="m-shots">—</span>
+        </div>
         <div class="metric" id="crater-metric" hidden>
-          <span class="metric-label">스퍼터 크레이터 깊이</span>
+          <span class="metric-label" id="crater-label">크레이터 깊이</span>
           <span class="metric-value" id="m-crater">—</span>
         </div>
       </div>

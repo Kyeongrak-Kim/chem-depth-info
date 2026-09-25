@@ -59,7 +59,7 @@ python scripts/generate_elements.py
 | GET | `/healthz` | 헬스체크 |
 | GET | `/api/elements` | 원소 데이터 목록 |
 | GET | `/api/equipment` | 분석 장비 메타데이터 |
-| POST | `/api/simulate` | `{symbol, equipment, energy}` → 깊이/폭 계산 |
+| POST | `/api/simulate` | `{symbol, equipment, energy, shots?}` → 깊이/폭 계산 |
 
 ## Cloud Agent 환경
 
@@ -69,6 +69,8 @@ python scripts/generate_elements.py
 
 정밀 계측이 아닌, 원소(질량·원자번호·밀도)와 장비·에너지에 따라 값이 일관되게 변하도록 설계한 근사 모델입니다.
 
-- 전자 프로브(AES, EPMA): Kanaya–Okayama 전자 침투 범위
-- 이온 빔(SIMS, GD-OES): 경험식 기반 이온 투사 범위
+- 전자 프로브(AES, EDS, EPMA/WDS): Kanaya–Okayama 전자 침투 범위
+- 이온 빔(SIMS, GD-OES, GD-MS): 경험식 기반 이온 투사 범위
 - 광전자(XPS): 비탄성 평균자유행로(IMFP) 기반 표면 감지 깊이
+- 레이저(LDI-MS, LIBS, LA-ICP-MS): 펄스 에너지·shot 수에 따른 삭마 깊이
+- GD-MS / LDI-MS / LIBS / LA-ICP-MS는 빔 세기와 shot 수를 같이 조절합니다.

@@ -20,87 +20,133 @@ CATEGORY_LABELS = {
     "unknown": "기타",
 }
 
+PROBE_LABELS = {
+    "electron": "전자",
+    "ion": "이온",
+    "photon": "광자",
+    "laser": "레이저",
+}
+
 STREAMLIT_CSS = """
 <style>
+  html { font-size: clamp(13px, 1.45vw, 16px); }
   html, body, [data-testid="stAppViewContainer"], .stApp {
-    background: radial-gradient(1200px 600px at 20% -10%, #16203c 0%, #0b1020 60%) !important;
-    color: #e8ecf7;
+    background:
+      radial-gradient(900px 480px at 12% -8%, #24315a 0%, transparent 58%),
+      radial-gradient(720px 420px at 92% 8%, #1d3a3a 0%, transparent 50%),
+      linear-gradient(180deg, #0d1428 0%, #080d1c 40%) !important;
+    color: #eef2fb !important;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif !important;
   }
   [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"],
   [data-testid="stStatusWidget"], #MainMenu, footer, .stDeployButton,
   [data-testid="stAppDeployButton"] { display: none !important; }
   .stMainBlockContainer, .block-container {
-    padding-top: 0.6rem !important;
+    padding-top: 0.5rem !important;
     padding-bottom: 2rem !important;
-    max-width: 1500px !important;
+    max-width: 1520px !important;
   }
   div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-    background: #141b30;
-    border: 1px solid #263156;
-    border-radius: 14px;
+    background: rgba(18, 26, 48, 0.86);
+    border: 1px solid #2a3760;
+    border-radius: 16px;
     padding: 16px 14px 18px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38);
   }
   .cd-panel {
-    background: #141b30;
-    border: 1px solid #263156;
-    border-radius: 14px;
-    padding: 16px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
-    margin: 12px 0 16px;
+    background: rgba(18, 26, 48, 0.86);
+    border: 1px solid #2a3760;
+    border-radius: 16px;
+    padding: clamp(12px, 1.6vw, 18px);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38);
+    margin: 10px 0 16px;
   }
-  [data-testid="stSlider"] label { color: #9aa6c4 !important; }
+  [data-testid="stSlider"] label { color: #9aa6c4 !important; font-size: clamp(0.78rem, 1.3vw, 0.92rem) !important; }
   [data-testid="stSlider"] div[data-baseweb="slider"] { padding-top: 4px; }
 
-  .cd-header { text-align: center; padding: 8px 8px 4px; }
+  .cd-header { text-align: center; padding: 6px 8px 2px; }
   .cd-header h1 {
     margin: 0;
-    font-size: clamp(1.4rem, 3vw, 2.1rem);
-    letter-spacing: 0.5px;
-    background: linear-gradient(90deg, #5ad1c8, #f6a94b);
+    font-size: clamp(1.35rem, 3.4vw, 2.25rem);
+    letter-spacing: 0.4px;
+    background: linear-gradient(90deg, #5ad1c8, #8ee4de 42%, #f6a94b);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
-  .cd-header p { margin: 6px 0 0; color: #9aa6c4; font-size: 0.95rem; }
+  .cd-header p { margin: 8px 0 0; color: #9aa6c4; font-size: clamp(0.82rem, 1.6vw, 1rem); }
   .cd-panel-title {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
     margin-bottom: 12px;
   }
-  .cd-panel-title h2 { margin: 0; font-size: 1.05rem; color: #e8ecf7; }
+  .cd-panel-title h2 { margin: 0; font-size: clamp(0.95rem, 1.6vw, 1.12rem); color: #eef2fb; }
   .cd-pill {
-    font-size: 0.85rem; padding: 4px 10px; border-radius: 999px;
-    background: #1c2542; border: 1px solid #263156; color: #9aa6c4;
+    font-size: clamp(0.72rem, 1.2vw, 0.85rem); padding: 4px 10px; border-radius: 999px;
+    background: #1a2340; border: 1px solid #2a3760; color: #9aa6c4; white-space: nowrap;
   }
-  .cd-pill-accent { color: #08201e; background: #5ad1c8; border-color: #5ad1c8; font-weight: 600; }
+  .cd-pill-accent { color: #08201e; background: #5ad1c8; border-color: #5ad1c8; font-weight: 700; }
   .cd-periodic {
     display: grid;
     grid-template-columns: repeat(18, minmax(0, 1fr));
     grid-auto-rows: 1fr;
-    gap: 3px;
+    gap: clamp(2px, 0.28vw, 4px);
   }
+
+  /* Streamlit restyles markdown <a> to theme-blue. Force ink on element tiles. */
+  .stApp a.cd-element,
+  .stApp a.cd-element:link,
+  .stApp a.cd-element:visited,
+  .stApp a.cd-element:hover,
+  .stApp a.cd-element:active,
+  [data-testid="stMarkdownContainer"] a.cd-element,
+  [data-testid="stMarkdownContainer"] a.cd-element:link,
+  [data-testid="stMarkdownContainer"] a.cd-element:visited,
+  [data-testid="stMarkdownContainer"] a.cd-element:hover,
+  [data-testid="stMarkdownContainer"] a.cd-element:active {
+    color: #0b1020 !important;
+    text-decoration: none !important;
+  }
+  .stApp a.cd-element .num,
+  .stApp a.cd-element .sym,
+  [data-testid="stMarkdownContainer"] a.cd-element .num,
+  [data-testid="stMarkdownContainer"] a.cd-element .sym {
+    color: #0b1020 !important;
+  }
+  .stApp a.cd-eq,
+  .stApp a.cd-eq:link,
+  .stApp a.cd-eq:visited,
+  .stApp a.cd-eq:hover,
+  [data-testid="stMarkdownContainer"] a.cd-eq,
+  [data-testid="stMarkdownContainer"] a.cd-eq:link,
+  [data-testid="stMarkdownContainer"] a.cd-eq:visited {
+    color: #eef2fb !important;
+    text-decoration: none !important;
+  }
+
   .cd-element {
     position: relative;
     aspect-ratio: 1 / 1;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 5px;
-    background: var(--cat, #ced4da);
-    color: #0b1020;
-    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.22), transparent 42%),
+      var(--cat, #ced4da);
+    color: #0b1020 !important;
+    text-decoration: none !important;
     padding: 2px;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     min-width: 0;
     outline: 2px solid transparent;
-    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .cd-element:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 2; }
+  .cd-element:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.35); z-index: 2; }
   .cd-element.selected { outline-color: #fff; box-shadow: 0 0 0 2px #f6a94b; z-index: 3; }
-  .cd-element .num { position: absolute; top: 2px; left: 4px; font-size: 0.58rem; opacity: 0.75; }
-  .cd-element .sym { font-size: clamp(0.72rem, 1.25vw, 1.05rem); line-height: 1; }
+  .cd-element .num { position: absolute; top: 2px; left: 4px; font-size: clamp(0.38rem, 0.72vw, 0.62rem); opacity: 0.72; color: #0b1020 !important; }
+  .cd-element .sym { font-size: clamp(0.52rem, 1.25vw, 1.05rem); line-height: 1; color: #0b1020 !important; }
   .cat-nonmetals { --cat: #7ee787; }
   .cat-noble-gases { --cat: #a5d8ff; }
   .cat-alkali-metals { --cat: #ffa8a8; }
@@ -114,40 +160,61 @@ STREAMLIT_CSS = """
   .cat-unknown { --cat: #ced4da; }
   .cd-legend {
     list-style: none; display: flex; flex-wrap: wrap; gap: 6px 12px;
-    padding: 12px 0 0; margin: 0; font-size: 0.72rem; color: #9aa6c4;
+    padding: 12px 0 0; margin: 0; font-size: clamp(0.64rem, 1.1vw, 0.74rem); color: #9aa6c4;
   }
   .cd-legend li { display: flex; align-items: center; gap: 5px; }
   .cd-legend .swatch { width: 12px; height: 12px; border-radius: 3px; background: var(--cat); }
-  .cd-eq-list { display: flex; flex-direction: column; gap: 8px; }
+  .cd-eq-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .cd-eq {
-    display: block; text-align: left; text-decoration: none;
-    border: 1px solid #263156; background: #1c2542; color: #e8ecf7;
-    border-radius: 10px; padding: 10px 12px;
+    display: block; text-align: left; text-decoration: none !important;
+    border: 1px solid #2a3760;
+    background: linear-gradient(180deg, #202a4c, #1a2340);
+    color: #eef2fb !important;
+    border-radius: 12px; padding: 9px 10px;
   }
   .cd-eq:hover { border-color: #5ad1c8; }
-  .cd-eq.active { border-color: #5ad1c8; background: #1f3a44; box-shadow: inset 0 0 0 1px #5ad1c8; }
-  .cd-eq .eq-name { font-weight: 700; }
-  .cd-eq .eq-full { display: block; font-size: 0.72rem; color: #9aa6c4; margin-top: 2px; }
+  .cd-eq.active {
+    border-color: #5ad1c8; background: linear-gradient(180deg, #21464a, #1b3540);
+    box-shadow: inset 0 0 0 1px #5ad1c8;
+  }
+  .cd-eq .eq-name { font-weight: 750; font-size: clamp(0.78rem, 1.2vw, 0.92rem); color: #eef2fb !important; }
+  .cd-eq .eq-full { display: block; font-size: clamp(0.62rem, 1vw, 0.72rem); color: #9aa6c4 !important; margin-top: 2px; line-height: 1.3; }
   .cd-eq .eq-probe {
-    float: right; font-size: 0.65rem; text-transform: uppercase;
-    letter-spacing: 0.5px; color: #5ad1c8;
+    float: right; font-size: 0.62rem; text-transform: uppercase;
+    letter-spacing: 0.4px; color: #5ad1c8 !important;
+    background: rgba(90, 209, 200, 0.16); border-radius: 999px; padding: 2px 7px;
   }
   .cd-energy-head { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 8px; }
-  .cd-energy-head h3 { margin: 0; font-size: 1rem; color: #e8ecf7; }
-  .cd-energy-scale { display: flex; justify-content: space-between; font-size: 0.72rem; color: #9aa6c4; }
-  .cd-desc { font-size: 0.8rem; color: #9aa6c4; margin: 10px 0 0; }
+  .cd-energy-head h3 { margin: 0; font-size: clamp(0.9rem, 1.5vw, 1.02rem); color: #eef2fb; }
+  .cd-energy-scale { display: flex; justify-content: space-between; font-size: clamp(0.64rem, 1.05vw, 0.74rem); color: #9aa6c4; }
+  .cd-desc { font-size: clamp(0.74rem, 1.2vw, 0.84rem); color: #9aa6c4; margin: 10px 0 0; line-height: 1.45; }
   .cd-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .cd-metric {
-    background: #1c2542; border: 1px solid #263156; border-radius: 10px; padding: 10px 12px;
+    background: linear-gradient(180deg, #202a4c, #1a2340);
+    border: 1px solid #2a3760; border-radius: 12px; padding: 11px 12px;
+    box-shadow: inset 3px 0 0 #5ad1c8;
   }
-  .cd-metric-label { display: block; font-size: 0.72rem; color: #9aa6c4; }
-  .cd-metric-value { display: block; font-size: 1.25rem; font-weight: 700; margin-top: 3px; color: #5ad1c8; }
+  .cd-metric-label { display: block; font-size: clamp(0.64rem, 1.05vw, 0.74rem); color: #9aa6c4; }
+  .cd-metric-value { display: block; font-size: clamp(1.02rem, 2vw, 1.32rem); font-weight: 750; margin-top: 3px; color: #5ad1c8; }
   .cd-viz { margin: 14px 0 0; }
   .cd-viz svg {
-    width: 100%; height: auto; background: #0a0f1f;
-    border: 1px solid #263156; border-radius: 10px; display: block;
+    width: 100%; height: auto; background: #070c1a;
+    border: 1px solid #2a3760; border-radius: 12px; display: block;
   }
-  .cd-viz figcaption { font-size: 0.75rem; color: #9aa6c4; margin-top: 8px; text-align: center; }
+  .cd-viz figcaption { font-size: clamp(0.68rem, 1.1vw, 0.78rem); color: #9aa6c4; margin-top: 8px; text-align: center; line-height: 1.4; }
+
+  @media (max-width: 720px) {
+    .cd-periodic { gap: 1.5px; }
+    .cd-element .num { display: none; }
+    .cd-element .sym { font-size: clamp(0.42rem, 2.5vw, 0.7rem) !important; }
+    .cd-eq-list { grid-template-columns: 1fr; }
+    .cd-eq .eq-full { display: none; }
+    .stMainBlockContainer, .block-container { padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
+  }
+  @media (min-width: 1280px) {
+    .cd-element .sym { font-size: clamp(0.82rem, 1.05vw, 1.08rem) !important; }
+    .cd-element .num { font-size: 0.62rem !important; }
+  }
 </style>
 """
 
@@ -175,10 +242,11 @@ def periodic_table_html(elements: Iterable[dict], selected_symbol: str, equipmen
         title = html.escape(f"{el['name']} (Z={el['number']}, ρ={el['density']} g/cm³)")
         cells.append(
             f'<a class="cd-element cat-{html.escape(el["category"])}{selected}" '
-            f'style="grid-row:{int(el["row"])};grid-column:{int(el["col"])}" '
-            f'href="{_href(el["symbol"], equipment_key)}" title="{title}">'
-            f'<span class="num">{int(el["number"])}</span>'
-            f'<span class="sym">{html.escape(el["symbol"])}</span></a>'
+            f'style="grid-row:{int(el["row"])};grid-column:{int(el["col"])};'
+            f'color:#0b1020!important;text-decoration:none"'
+            f' href="{_href(el["symbol"], equipment_key)}" title="{title}">'
+            f'<span class="num" style="color:#0b1020!important">{int(el["number"])}</span>'
+            f'<span class="sym" style="color:#0b1020!important">{html.escape(el["symbol"])}</span></a>'
         )
     legend = "".join(
         f'<li><span class="swatch cat-{html.escape(cat)}"></span>'
@@ -201,9 +269,11 @@ def equipment_html(equipment: Iterable[dict], selected_key: str, symbol: str) ->
     cards = []
     for eq in equipment:
         active = " active" if eq["key"] == selected_key else ""
+        probe = PROBE_LABELS.get(eq["probe"], eq["probe"])
         cards.append(
-            f'<a class="cd-eq{active}" href="{_href(symbol, eq["key"])}">'
-            f'<span class="eq-probe">{html.escape(eq["probe"])}</span>'
+            f'<a class="cd-eq{active}" href="{_href(symbol, eq["key"])}" '
+            f'style="color:#eef2fb!important;text-decoration:none">'
+            f'<span class="eq-probe">{html.escape(probe)}</span>'
             f'<span class="eq-name">{html.escape(eq["name"])}</span>'
             f'<span class="eq-full">{html.escape(eq["full_name"])}</span></a>'
         )
@@ -213,22 +283,39 @@ def equipment_html(equipment: Iterable[dict], selected_key: str, symbol: str) ->
     )
 
 
-def energy_head_html(energy_keV: float) -> str:
+def energy_head_html(energy: float, label: str = "빔 에너지", unit: str = "keV") -> str:
     return (
-        '<div class="cd-energy-head"><h3>3 · 빔 에너지</h3>'
-        f'<span class="cd-pill cd-pill-accent">{energy_keV:g} keV</span></div>'
+        f'<div class="cd-energy-head"><h3>3 · {html.escape(label)}</h3>'
+        f'<span class="cd-pill cd-pill-accent">{energy:g} {html.escape(unit)}</span></div>'
+    )
+
+
+def shots_head_html(shots: int) -> str:
+    return (
+        '<div class="cd-energy-head"><h3>4 · Shot 수</h3>'
+        f'<span class="cd-pill cd-pill-accent">{int(shots)}</span></div>'
     )
 
 
 def results_html(result: dict, symbol: str) -> str:
     crater = ""
     if result["sputtering"]:
+        crater_label = "삭마 크레이터 깊이" if result["probe"] == "laser" else "스퍼터 크레이터 깊이"
         crater = (
-            '<div class="cd-metric"><span class="cd-metric-label">스퍼터 크레이터 깊이</span>'
+            f'<div class="cd-metric"><span class="cd-metric-label">{crater_label}</span>'
             f'<span class="cd-metric-value">{html.escape(format_length(result["crater_depth_um"]))}</span></div>'
         )
+    shots_metric = ""
+    if result.get("uses_shots"):
+        shots_metric = (
+            '<div class="cd-metric"><span class="cd-metric-label">Shot 수</span>'
+            f'<span class="cd-metric-value">{int(result["shots"])}</span></div>'
+        )
+    unit = result.get("energy_unit", "keV")
+    shots_bit = f' × {int(result["shots"])} shots' if result.get("uses_shots") else ""
     caption = (
-        f'{html.escape(symbol)} · {html.escape(result["equipment_name"])} @ {result["energy_keV"]} keV — '
+        f'{html.escape(symbol)} · {html.escape(result["equipment_name"])} @ '
+        f'{result["energy_keV"]:g} {html.escape(unit)}{shots_bit} — '
         f'깊이 {html.escape(format_length(result["depth_um"]))}, '
         f'폭 {html.escape(format_length(result["width_um"]))} (로그 스케일 시각화)'
     )
@@ -241,7 +328,7 @@ def results_html(result: dict, symbol: str) -> str:
         f'<span class="cd-metric-value">{html.escape(format_length(result["width_um"]))}</span></div>'
         '<div class="cd-metric"><span class="cd-metric-label">종횡비 (깊이/폭)</span>'
         f'<span class="cd-metric-value">{result["aspect_ratio"]:.3f}</span></div>'
-        f"{crater}</div>"
+        f"{shots_metric}{crater}</div>"
         f'<figure class="cd-viz">{cross_section_svg(result)}'
         f"<figcaption>{caption}</figcaption></figure>"
     )

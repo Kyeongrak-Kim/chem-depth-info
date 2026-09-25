@@ -7,7 +7,8 @@ const EQUIPMENT = boot.equipment;
 const state = {
   symbol: "Si",
   equipment: EQUIPMENT[0].key,
-  energy: null, // resolved from slider
+  energy: null,
+  shots: null,
 };
 
 const CATEGORY_LABELS = {
@@ -24,7 +25,13 @@ const CATEGORY_LABELS = {
   "unknown": "기타",
 };
 
-/* ---------- Periodic table ---------- */
+const PROBE_LABELS = {
+  electron: "전자",
+  ion: "이온",
+  photon: "광자",
+  laser: "레이저",
+};
+
 function buildTable() {
   const grid = document.getElementById("periodic-table");
   grid.innerHTML = "";
@@ -65,7 +72,6 @@ function selectElement(symbol) {
   run();
 }
 
-/* ---------- Equipment ---------- */
 function buildEquipment() {
   const list = document.getElementById("equipment-list");
   list.innerHTML = "";
@@ -76,7 +82,7 @@ function buildEquipment() {
     btn.dataset.key = eq.key;
     btn.setAttribute("role", "radio");
     btn.innerHTML =
-      `<span class="eq-probe">${eq.probe}</span>` +
+      `<span class="eq-probe">${PROBE_LABELS[eq.probe] || eq.probe}</span>` +
       `<span class="eq-name">${eq.name}</span>` +
       `<span class="eq-full">${eq.full_name}</span>`;
     btn.addEventListener("click", () => selectEquipment(eq.key));
@@ -88,6 +94,24 @@ function currentEquipment() {
   return EQUIPMENT.find((e) => e.key === state.equipment);
 }
 
+function applyShotsUi(eq) {
+  const block = document.getElementById("shots-block");
+  if (!eq.uses_shots) {
+    block.hidden = true;
+    state.shots = null;
+    return;
+  }
+  block.hidden = false;
+  const slider = document.getElementById("shots-slider");
+  slider.min = String(eq.min_shots);
+  slider.max = String(eq.max_shots);
+  slider.value = String(eq.default_shots);
+  state.shots = eq.default_shots;
+  document.getElementById("shots-min").textContent = String(eq.min_shots);
+  document.getElementById("shots-max").textContent = String(eq.max_shots);
+  updateShotsReadout();
+}
+
 function selectEquipment(key) {
   state.equipment = key;
   const eq = currentEquipment();
@@ -96,14 +120,15 @@ function selectEquipment(key) {
     b.setAttribute("aria-checked", b.dataset.key === key ? "true" : "false");
   });
   document.getElementById("equipment-desc").textContent = eq.description;
-  // Reset slider bounds; default to instrument default energy.
-  document.getElementById("energy-min").textContent = `${eq.min_energy} keV`;
-  document.getElementById("energy-max").textContent = `${eq.max_energy} keV`;
+  document.getElementById("energy-title").textContent = `3 · ${eq.energy_label || "빔 에너지"}`;
+  document.getElementById("energy-min").textContent = `${eq.min_energy} ${eq.energy_unit}`;
+  document.getElementById("energy-max").textContent = `${eq.max_energy} ${eq.energy_unit}`;
   const slider = document.getElementById("energy-slider");
   const frac = (eq.default_energy - eq.min_energy) / (eq.max_energy - eq.min_energy);
   slider.value = String(frac);
   state.energy = eq.default_energy;
   updateEnergyReadout();
+  applyShotsUi(eq);
   run();
 }
 
@@ -115,13 +140,22 @@ function sliderToEnergy() {
 }
 
 function updateEnergyReadout() {
-  document.getElementById("energy-readout").textContent = `${state.energy} keV`;
+  const eq = currentEquipment();
+  document.getElementById("energy-readout").textContent = `${state.energy} ${eq.energy_unit}`;
 }
 
-/* ---------- Simulation call ---------- */
+function updateShotsReadout() {
+  document.getElementById("shots-readout").textContent = String(state.shots);
+}
+
 let pending = null;
 async function run() {
-  const body = { symbol: state.symbol, equipment: state.equipment, energy: state.energy };
+  const body = {
+    symbol: state.symbol,
+    equipment: state.equipment,
+    energy: state.energy,
+  };
+  if (state.shots != null) body.shots = state.shots;
   if (pending) pending.abort();
   pending = new AbortController();
   try {
@@ -140,7 +174,6 @@ async function run() {
 }
 
 function fmtLength(um) {
-  // Choose a friendly unit from nm / µm / mm.
   const nm = um * 1000;
   if (nm < 1000) return `${nm.toFixed(nm < 10 ? 2 : 1)} nm`;
   if (um < 1000) return `${um.toFixed(um < 10 ? 2 : 1)} µm`;
@@ -152,26 +185,36 @@ function render(data) {
   document.getElementById("m-width").textContent = fmtLength(data.width_um);
   document.getElementById("m-aspect").textContent = data.aspect_ratio.toFixed(3);
 
+  const shotsMetric = document.getElementById("shots-metric");
+  if (data.uses_shots) {
+    shotsMetric.hidden = false;
+    document.getElementById("m-shots").textContent = String(data.shots);
+  } else {
+    shotsMetric.hidden = true;
+  }
+
   const craterMetric = document.getElementById("crater-metric");
   if (data.sputtering) {
     craterMetric.hidden = false;
+    document.getElementById("crater-label").textContent =
+      data.probe === "laser" ? "삭마 크레이터 깊이" : "스퍼터 크레이터 깊이";
     document.getElementById("m-crater").textContent = fmtLength(data.crater_depth_um);
   } else {
     craterMetric.hidden = true;
   }
 
+  const unit = data.energy_unit || "keV";
+  const shotsBit = data.uses_shots ? ` × ${data.shots} shots` : "";
   document.getElementById("viz-caption").textContent =
-    `${data.element.symbol} · ${data.equipment_name} @ ${data.energy_keV} keV — ` +
+    `${data.element.symbol} · ${data.equipment_name} @ ${data.energy_keV} ${unit}${shotsBit} — ` +
     `깊이 ${fmtLength(data.depth_um)}, 폭 ${fmtLength(data.width_um)} (로그 스케일 시각화)`;
 
   drawViz(data);
 }
 
-/* ---------- Cross-section visualization ---------- */
 function logScale(um) {
-  // Map a length in µm (spanning ~1e-3 .. 1e3) into a 0..1 fraction on a log axis.
-  const lo = -4; // 0.1 nm
-  const hi = 4; // 10 mm
+  const lo = -4;
+  const hi = 4;
   const v = Math.log10(Math.max(um, 1e-4));
   return Math.min(1, Math.max(0, (v - lo) / (hi - lo)));
 }
@@ -188,13 +231,11 @@ function drawViz(data) {
   const usableW = W - marginX * 2;
   const usableH = H - surfaceY - 30;
 
-  // Material block
   ctx.fillStyle = "#111a33";
   ctx.fillRect(marginX, surfaceY, usableW, usableH);
   ctx.strokeStyle = "#2b3a66";
   ctx.strokeRect(marginX, surfaceY, usableW, usableH);
 
-  // Surface line + label
   ctx.strokeStyle = "#5ad1c8";
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -212,7 +253,6 @@ function drawViz(data) {
   const depthPx = Math.max(6, depthFrac * usableH);
   const cx = marginX + usableW / 2;
 
-  // Penetration profile: a rounded lobe from the surface downward.
   const grad = ctx.createLinearGradient(0, surfaceY, 0, surfaceY + depthPx);
   grad.addColorStop(0, "rgba(246, 169, 75, 0.85)");
   grad.addColorStop(1, "rgba(246, 169, 75, 0.05)");
@@ -235,7 +275,6 @@ function drawViz(data) {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Width annotation (double arrow)
   ctx.strokeStyle = "#e8ecf7";
   ctx.fillStyle = "#e8ecf7";
   ctx.lineWidth = 1;
@@ -245,14 +284,12 @@ function drawViz(data) {
   ctx.stroke();
   ctx.fillText(`폭 ${fmtLength(data.width_um)}`, cx + halfW + 4, surfaceY + 4);
 
-  // Depth annotation
   ctx.beginPath();
   ctx.moveTo(cx, surfaceY);
   ctx.lineTo(cx, surfaceY + depthPx);
   ctx.stroke();
   ctx.fillText(`깊이 ${fmtLength(data.depth_um)}`, cx + 6, surfaceY + depthPx + 14);
 
-  // Crater outline for sputtering techniques.
   if (data.sputtering && data.crater_depth_um > data.depth_um) {
     const craterFrac = logScale(data.crater_depth_um);
     const craterPx = Math.min(usableH, Math.max(depthPx, craterFrac * usableH));
@@ -270,7 +307,6 @@ function drawViz(data) {
   }
 }
 
-/* ---------- Init ---------- */
 function init() {
   buildTable();
   buildLegend();
@@ -279,6 +315,11 @@ function init() {
   document.getElementById("energy-slider").addEventListener("input", () => {
     state.energy = sliderToEnergy();
     updateEnergyReadout();
+    run();
+  });
+  document.getElementById("shots-slider").addEventListener("input", () => {
+    state.shots = parseInt(document.getElementById("shots-slider").value, 10);
+    updateShotsReadout();
     run();
   });
 

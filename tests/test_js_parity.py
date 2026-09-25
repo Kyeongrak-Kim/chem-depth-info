@@ -18,24 +18,36 @@ AU = {"symbol": "Au", "name": "Gold", "number": 79, "density": 19.3, "atomic_mas
 SI = {"symbol": "Si", "name": "Silicon", "number": 14, "density": 2.33, "atomic_mass": 28.085}
 
 CASES = [
-    (FE, "sims", None),
-    (FE, "gdoes", 15),
-    (FE, "xps", None),
-    (FE, "aes", 19.96),
-    (FE, "epma", 5),
-    (AU, "epma", 30),
-    (SI, "sims", 0.5),
-    (SI, "xps", 0.2),
+    (FE, "sims", None, None),
+    (FE, "gdoes", 15, None),
+    (FE, "xps", None, None),
+    (FE, "aes", 19.96, None),
+    (FE, "epma", 5, None),
+    (FE, "eds", 15, None),
+    (AU, "epma", 30, None),
+    (SI, "sims", 0.5, None),
+    (SI, "xps", 0.2, None),
+    (FE, "gdms", 1.5, 500),
+    (FE, "ldims", 0.12, 20),
+    (FE, "libs", 50, 50),
+    (SI, "laicpms", 1.5, 100),
+    (AU, "libs", 200, 2000),
 ]
 
 
-def _js_simulate(element: dict, equipment: str, energy) -> dict:
-    payload = json.dumps({"element": element, "equipment": equipment, "energy": energy})
+def _js_simulate(element: dict, equipment: str, energy, shots=None) -> dict:
+    payload = json.dumps({
+        "element": element,
+        "equipment": equipment,
+        "energy": energy,
+        "shots": shots,
+    })
     script = f"""
 const {{ simulate }} = require({json.dumps(str(JS))});
 const input = {payload};
 const energy = input.energy === null ? undefined : input.energy;
-process.stdout.write(JSON.stringify(simulate(input.element, input.equipment, energy)));
+const shots = input.shots === null ? undefined : input.shots;
+process.stdout.write(JSON.stringify(simulate(input.element, input.equipment, energy, shots)));
 """
     proc = subprocess.run(
         ["node", "-e", script],
@@ -46,10 +58,10 @@ process.stdout.write(JSON.stringify(simulate(input.element, input.equipment, ene
     return json.loads(proc.stdout)
 
 
-@pytest.mark.parametrize("element,equipment,energy", CASES)
-def test_js_matches_python(element, equipment, energy):
-    expected = simulate(element, equipment, energy)
-    actual = _js_simulate(element, equipment, energy)
+@pytest.mark.parametrize("element,equipment,energy,shots", CASES)
+def test_js_matches_python(element, equipment, energy, shots):
+    expected = simulate(element, equipment, energy, shots)
+    actual = _js_simulate(element, equipment, energy, shots)
     for key in expected:
         if isinstance(expected[key], float):
             assert actual[key] == pytest.approx(expected[key], rel=1e-9, abs=1e-9), key

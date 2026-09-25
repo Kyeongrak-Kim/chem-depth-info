@@ -6,6 +6,7 @@ const state = {
   symbol: "Si",
   equipment: "sims",
   energy: null,
+  shots: null,
 };
 
 const CATEGORY_LABELS = {
@@ -20,6 +21,13 @@ const CATEGORY_LABELS = {
   "lanthanides": "란타넘족",
   "actinides": "악티늄족",
   "unknown": "기타",
+};
+
+const PROBE_LABELS = {
+  electron: "전자",
+  ion: "이온",
+  photon: "광자",
+  laser: "레이저",
 };
 
 function assetUrl(relativePath) {
@@ -77,7 +85,7 @@ function buildEquipment() {
     btn.dataset.key = eq.key;
     btn.setAttribute("role", "radio");
     btn.innerHTML =
-      `<span class="eq-probe">${eq.probe}</span>` +
+      `<span class="eq-probe">${PROBE_LABELS[eq.probe] || eq.probe}</span>` +
       `<span class="eq-name">${eq.name}</span>` +
       `<span class="eq-full">${eq.full_name}</span>`;
     btn.addEventListener("click", () => selectEquipment(eq.key));
@@ -89,6 +97,24 @@ function currentEquipment() {
   return EQUIPMENT.find((e) => e.key === state.equipment);
 }
 
+function applyShotsUi(eq) {
+  const block = document.getElementById("shots-block");
+  if (!eq.uses_shots) {
+    block.hidden = true;
+    state.shots = null;
+    return;
+  }
+  block.hidden = false;
+  const slider = document.getElementById("shots-slider");
+  slider.min = String(eq.min_shots);
+  slider.max = String(eq.max_shots);
+  slider.value = String(eq.default_shots);
+  state.shots = eq.default_shots;
+  document.getElementById("shots-min").textContent = String(eq.min_shots);
+  document.getElementById("shots-max").textContent = String(eq.max_shots);
+  updateShotsReadout();
+}
+
 function selectEquipment(key) {
   state.equipment = key;
   const eq = currentEquipment();
@@ -97,13 +123,15 @@ function selectEquipment(key) {
     b.setAttribute("aria-checked", b.dataset.key === key ? "true" : "false");
   });
   document.getElementById("equipment-desc").textContent = eq.description;
-  document.getElementById("energy-min").textContent = `${eq.min_energy} keV`;
-  document.getElementById("energy-max").textContent = `${eq.max_energy} keV`;
+  document.getElementById("energy-title").textContent = `3 · ${eq.energy_label || "빔 에너지"}`;
+  document.getElementById("energy-min").textContent = `${eq.min_energy} ${eq.energy_unit}`;
+  document.getElementById("energy-max").textContent = `${eq.max_energy} ${eq.energy_unit}`;
   const slider = document.getElementById("energy-slider");
   const frac = (eq.default_energy - eq.min_energy) / (eq.max_energy - eq.min_energy);
   slider.value = String(frac);
   state.energy = eq.default_energy;
   updateEnergyReadout();
+  applyShotsUi(eq);
   run();
 }
 
@@ -115,14 +143,19 @@ function sliderToEnergy() {
 }
 
 function updateEnergyReadout() {
-  document.getElementById("energy-readout").textContent = `${state.energy} keV`;
+  const eq = currentEquipment();
+  document.getElementById("energy-readout").textContent = `${state.energy} ${eq.energy_unit}`;
+}
+
+function updateShotsReadout() {
+  document.getElementById("shots-readout").textContent = String(state.shots);
 }
 
 function run() {
   const el = ELEMENTS.find((e) => e.symbol === state.symbol);
   const eq = currentEquipment();
   if (!el || !eq) return;
-  const data = simulate(el, state.equipment, state.energy);
+  const data = simulate(el, state.equipment, state.energy, state.shots);
   data.element = {
     symbol: el.symbol,
     name: el.name,
@@ -145,16 +178,28 @@ function render(data) {
   document.getElementById("m-width").textContent = fmtLength(data.width_um);
   document.getElementById("m-aspect").textContent = data.aspect_ratio.toFixed(3);
 
+  const shotsMetric = document.getElementById("shots-metric");
+  if (data.uses_shots) {
+    shotsMetric.hidden = false;
+    document.getElementById("m-shots").textContent = String(data.shots);
+  } else {
+    shotsMetric.hidden = true;
+  }
+
   const craterMetric = document.getElementById("crater-metric");
   if (data.sputtering) {
     craterMetric.hidden = false;
+    document.getElementById("crater-label").textContent =
+      data.probe === "laser" ? "삭마 크레이터 깊이" : "스퍼터 크레이터 깊이";
     document.getElementById("m-crater").textContent = fmtLength(data.crater_depth_um);
   } else {
     craterMetric.hidden = true;
   }
 
+  const unit = data.energy_unit || "keV";
+  const shotsBit = data.uses_shots ? ` × ${data.shots} shots` : "";
   document.getElementById("viz-caption").textContent =
-    `${data.element.symbol} · ${data.equipment_name} @ ${data.energy_keV} keV — ` +
+    `${data.element.symbol} · ${data.equipment_name} @ ${data.energy_keV} ${unit}${shotsBit} — ` +
     `깊이 ${fmtLength(data.depth_um)}, 폭 ${fmtLength(data.width_um)} (로그 스케일 시각화)`;
 
   drawViz(data);
@@ -266,7 +311,6 @@ async function init() {
     const res = await fetch(assetUrl("data/elements.json"));
     if (!res.ok) throw new Error(`elements.json HTTP ${res.status}`);
     ELEMENTS = await res.json();
-    // EQUIPMENT already defined in simulation.js
     state.equipment = EQUIPMENT[0].key;
   } catch (err) {
     console.error(err);
@@ -281,6 +325,11 @@ async function init() {
   document.getElementById("energy-slider").addEventListener("input", () => {
     state.energy = sliderToEnergy();
     updateEnergyReadout();
+    run();
+  });
+  document.getElementById("shots-slider").addEventListener("input", () => {
+    state.shots = parseInt(document.getElementById("shots-slider").value, 10);
+    updateShotsReadout();
     run();
   });
 

@@ -53,6 +53,7 @@ def create_app() -> Flask:
         symbol = payload.get("symbol")
         equipment_key = payload.get("equipment")
         energy = payload.get("energy")
+        shots = payload.get("shots")
 
         element = elements_by_symbol().get(symbol)
         if element is None:
@@ -65,7 +66,12 @@ def create_app() -> Flask:
         except (TypeError, ValueError):
             return jsonify(error="energy must be a number"), 400
 
-        result = simulate(element, equipment_key, energy_val)
+        try:
+            shots_val = None if shots in (None, "") else int(shots)
+        except (TypeError, ValueError):
+            return jsonify(error="shots must be an integer"), 400
+
+        result = simulate(element, equipment_key, energy_val, shots_val)
         result["element"] = {
             "symbol": element["symbol"],
             "name": element["name"],

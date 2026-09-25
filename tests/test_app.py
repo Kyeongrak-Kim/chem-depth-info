@@ -121,3 +121,63 @@ def test_equipment_html_marks_active():
     html = equipment_html(equipment_catalog(), "xps", "Si")
     assert "cd-eq active" in html
     assert "?el=Si&eq=xps" in html
+    assert "EDS" in html
+    assert "EPMA (WDS)" in html
+    assert "LDI-MS" in html
+    assert "GD-MS" in html
+    assert "LIBS" in html
+    assert "LA-ICP-MS" in html
+
+
+def test_epma_is_wds_and_eds_is_separate():
+    assert EQUIPMENT["epma"].name == "EPMA (WDS)"
+    assert EQUIPMENT["eds"].name == "EDS"
+    assert EQUIPMENT["eds"].probe == "electron"
+    eds = simulate(FE, "eds", 15)
+    wds = simulate(FE, "epma", 15)
+    assert eds["width_um"] > wds["width_um"]
+
+
+@pytest.mark.parametrize("key", ["gdms", "ldims", "libs", "laicpms"])
+def test_more_shots_go_deeper(key):
+    eq = EQUIPMENT[key]
+    lo = simulate(FE, key, eq.default_energy, eq.min_shots)
+    hi = simulate(FE, key, eq.default_energy, eq.max_shots)
+    assert hi["depth_nm"] > lo["depth_nm"]
+    assert hi["shots"] == eq.max_shots
+    assert lo["uses_shots"] is True
+
+
+def test_shots_clamped_to_range():
+    eq = EQUIPMENT["libs"]
+    low = simulate(FE, "libs", eq.default_energy, eq.min_shots - 100)
+    high = simulate(FE, "libs", eq.default_energy, eq.max_shots + 100)
+    assert low["shots"] == eq.min_shots
+    assert high["shots"] == eq.max_shots
+
+
+def test_non_shot_instrument_ignores_shots():
+    result = simulate(FE, "xps", None, 999)
+    assert result["uses_shots"] is False
+    assert result["shots"] == 1
+
+
+def test_api_simulate_with_shots(client):
+    resp = client.post(
+        "/api/simulate",
+        json={"symbol": "Fe", "equipment": "ldims", "energy": 0.2, "shots": 40},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["equipment"] == "ldims"
+    assert body["shots"] == 40
+    assert body["energy_unit"] == "mJ"
+    assert body["probe"] == "laser"
+
+
+def test_api_simulate_bad_shots(client):
+    resp = client.post(
+        "/api/simulate",
+        json={"symbol": "Fe", "equipment": "libs", "shots": "nope"},
+    )
+    assert resp.status_code == 400
