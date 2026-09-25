@@ -6,8 +6,13 @@ import os
 import pytest
 
 from app import create_app
-from app.display import cross_section_svg, format_length
-from app.simulation import EQUIPMENT, simulate
+from app.display import (
+    cross_section_svg,
+    equipment_html,
+    format_length,
+    periodic_table_html,
+)
+from app.simulation import EQUIPMENT, equipment_catalog, simulate
 
 FE = {"symbol": "Fe", "name": "Iron", "number": 26, "density": 7.87, "atomic_mass": 55.845}
 AU = {"symbol": "Au", "name": "Gold", "number": 79, "density": 19.3, "atomic_mass": 196.97}
@@ -100,3 +105,19 @@ def test_cross_section_svg_contains_labels():
     assert "<svg" in svg
     assert "깊이" in svg
     assert "폭" in svg
+
+
+def test_periodic_table_html_marks_selection():
+    from app import load_elements
+
+    html = periodic_table_html(load_elements(), "Fe", "sims")
+    assert html.count('class="cd-element') == 118
+    assert "selected" in html
+    assert "?el=Fe&eq=sims" in html
+    assert "비금속" in html
+
+
+def test_equipment_html_marks_active():
+    html = equipment_html(equipment_catalog(), "xps", "Si")
+    assert "cd-eq active" in html
+    assert "?el=Si&eq=xps" in html
