@@ -23,7 +23,17 @@ pip install -r requirements.txt
 python app.py            # http://localhost:5000
 ```
 
-환경변수 `HOST`(기본 `0.0.0.0`), `PORT`(기본 `5000`)로 바인딩을 바꿀 수 있습니다.
+환경변수 `HOST`(기본 `0.0.0.0`), `PORT`(기본 `5000`), `FLASK_DEBUG`(기본 `1`)로 바인딩과 디버그 모드를 바꿀 수 있습니다.
+
+## GitHub Codespaces에서 열기
+
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-GitHub%20Codespaces-blue?logo=github)](https://codespaces.new/Kyeongrak-Kim/chem-depth-info/tree/cursor/github-codespaces-0f05)
+
+1. 위 배지를 누르거나, 저장소에서 **Code → Codespaces → Create codespace on `cursor/github-codespaces-0f05`** 를 선택합니다.
+2. 컨테이너가 준비되면 `postStartCommand`가 Flask를 **5000** 포트에서 자동으로 켭니다.
+3. Codespaces가 미리보기 탭을 열거나, `https://<codespace이름>-5000.app.github.dev` 로 페이지가 열립니다.
+
+GitHub Pages에는 이 Flask 앱을 그대로 올릴 수 없습니다. 깊이/폭 계산이 `POST /api/simulate` Python API에 있어서, Pages용으로는 시뮬레이션을 JavaScript로 옮긴 **정적 버전을 새로** 만들어야 합니다.
 
 ## 개발 (테스트 · 데이터 재생성)
 

@@ -1,0 +1,26 @@
+{
+  "name": "chem-depth-info",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "forwardPorts": [5000],
+  "portsAttributes": {
+    "5000": {
+      "label": "chem-depth-info",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "bash scripts/codespace-setup.sh",
+  "postStartCommand": "bash scripts/codespace-start.sh",
+  "remoteEnv": {
+    "HOST": "0.0.0.0",
+    "PORT": "5000",
+    "FLASK_DEBUG": "0"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"],
+      "settings": {
+        "python.defaultInterpreterPath": "${containerWorkspaceFolder}/.venv/bin/python"
+      }
+    }
+  }
+}
