@@ -28,6 +28,29 @@ PROBE_LABELS = {
     "laser": "레이저",
 }
 
+MODEL_NOTES = {
+    "electron": (
+        "깊이: Kanaya–Okayama 전자 비정. "
+        "폭: 프로브 직경 + Castaing/Reed 상호작용 배(pear)."
+    ),
+    "aes": (
+        "깊이: 오제 전자 탈출 깊이(~3λ). "
+        "폭: 집속 빔 직경(일차 전자 비정이 아님)."
+    ),
+    "ion": (
+        "깊이: LSS형 이온 투사 범위. "
+        "폭: 래스터/양극 직경(이온 횡방향 straggle은 nm)."
+    ),
+    "photon": (
+        "깊이: 광전자 IMFP의 약 3배(TPP형). "
+        "폭: X선 스팟 크기."
+    ),
+    "laser": (
+        "깊이: 펄스 에너지·shot에 따른 삭마. "
+        "폭: 집속 레이저 스팟(깊이에 따른 약간 벌어짐)."
+    ),
+}
+
 STREAMLIT_CSS = """
 <style>
   html { font-size: clamp(13px, 1.45vw, 16px); }
@@ -314,11 +337,14 @@ def results_html(result: dict, symbol: str) -> str:
         )
     unit = result.get("energy_unit", "keV")
     shots_bit = f' × {int(result["shots"])} shots' if result.get("uses_shots") else ""
+    note_key = "aes" if result["equipment"] == "aes" else result["probe"]
+    note = MODEL_NOTES.get(note_key, "")
     caption = (
         f'{html.escape(symbol)} · {html.escape(result["equipment_name"])} @ '
         f'{result["energy_keV"]:g} {html.escape(unit)}{shots_bit} — '
         f'깊이 {html.escape(format_length(result["depth_um"]))}, '
-        f'폭 {html.escape(format_length(result["width_um"]))} (로그 스케일 시각화)'
+        f'폭 {html.escape(format_length(result["width_um"]))} (로그 스케일 시각화)<br>'
+        f'<span>{html.escape(note)}</span>'
     )
     return (
         '<div class="cd-panel-title"><h2>결과</h2></div>'

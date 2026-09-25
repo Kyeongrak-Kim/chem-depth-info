@@ -69,8 +69,9 @@ python scripts/generate_elements.py
 
 정밀 계측이 아닌, 원소(질량·원자번호·밀도)와 장비·에너지에 따라 값이 일관되게 변하도록 설계한 근사 모델입니다.
 
-- 전자 프로브(AES, EDS, EPMA/WDS): Kanaya–Okayama 전자 침투 범위
-- 이온 빔(SIMS, GD-OES, GD-MS): 경험식 기반 이온 투사 범위
-- 광전자(XPS): 비탄성 평균자유행로(IMFP) 기반 표면 감지 깊이
-- 레이저(LDI-MS, LIBS, LA-ICP-MS): 펄스 에너지·shot 수에 따른 삭마 깊이
+- 전자 프로브(EDS, EPMA/WDS): 깊이 = Kanaya–Okayama 전자 비정. 폭 = 프로브 직경 + Castaing/Reed 상호작용 배(pear)
+- AES: 깊이는 오제 전자 탈출 깊이(~3λ), 폭은 집속 빔
+- 이온 빔(SIMS, GD-OES, GD-MS): 깊이 = LSS형 투사 범위. 폭 = 래스터/양극 직경(기본값은 일상적인 스팟이지 최대 크레이터가 아님)
+- 광전자(XPS): 깊이 = IMFP의 약 3배(TPP형). 폭 = X선 스팟
+- 레이저(LDI-MS, LIBS, LA-ICP-MS): 깊이 = 펄스 에너지·shot 삭마. 폭 = 집속 스팟
 - GD-MS / LDI-MS / LIBS / LA-ICP-MS는 빔 세기와 shot 수를 같이 조절합니다.

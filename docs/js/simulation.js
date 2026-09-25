@@ -6,6 +6,8 @@
  */
 const ION_RANGE_K = 20.0;
 const PHOTON_K = 6.0;
+const AUGER_K = 4.0;
+const AUGER_KE_KEV = 0.5;
 const LASER_K = 1800.0;
 
 const EQUIPMENT = [
@@ -19,8 +21,8 @@ const EQUIPMENT = [
     default_energy: 5.0,
     min_energy: 0.5,
     max_energy: 25.0,
-    beam_diameter_um: 30.0,
-    straggle_factor: 0.5,
+    beam_diameter_um: 10.0,
+    straggle_factor: 0.05,
     depth_scale: 1.0,
     sputtering: true,
     uses_shots: false,
@@ -41,7 +43,7 @@ const EQUIPMENT = [
     min_energy: 5.0,
     max_energy: 40.0,
     beam_diameter_um: 2500.0,
-    straggle_factor: 0.1,
+    straggle_factor: 0.01,
     depth_scale: 9.0,
     sputtering: true,
     uses_shots: false,
@@ -62,7 +64,7 @@ const EQUIPMENT = [
     min_energy: 0.5,
     max_energy: 5.0,
     beam_diameter_um: 2000.0,
-    straggle_factor: 0.12,
+    straggle_factor: 0.01,
     depth_scale: 14.0,
     sputtering: true,
     uses_shots: true,
@@ -82,8 +84,8 @@ const EQUIPMENT = [
     default_energy: 1.4,
     min_energy: 0.2,
     max_energy: 1.5,
-    beam_diameter_um: 400.0,
-    straggle_factor: 0.05,
+    beam_diameter_um: 50.0,
+    straggle_factor: 0.02,
     depth_scale: 1.0,
     sputtering: false,
     uses_shots: false,
@@ -103,8 +105,8 @@ const EQUIPMENT = [
     default_energy: 5.0,
     min_energy: 1.0,
     max_energy: 25.0,
-    beam_diameter_um: 0.05,
-    straggle_factor: 0.7,
+    beam_diameter_um: 0.03,
+    straggle_factor: 0.2,
     depth_scale: 1.0,
     sputtering: false,
     uses_shots: false,
@@ -124,8 +126,8 @@ const EQUIPMENT = [
     default_energy: 15.0,
     min_energy: 5.0,
     max_energy: 30.0,
-    beam_diameter_um: 1.5,
-    straggle_factor: 0.95,
+    beam_diameter_um: 0.2,
+    straggle_factor: 0.40,
     depth_scale: 1.08,
     sputtering: false,
     uses_shots: false,
@@ -145,8 +147,8 @@ const EQUIPMENT = [
     default_energy: 15.0,
     min_energy: 5.0,
     max_energy: 30.0,
-    beam_diameter_um: 1.0,
-    straggle_factor: 0.8,
+    beam_diameter_um: 0.2,
+    straggle_factor: 0.28,
     depth_scale: 1.0,
     sputtering: false,
     uses_shots: false,
@@ -166,8 +168,8 @@ const EQUIPMENT = [
     default_energy: 0.12,
     min_energy: 0.01,
     max_energy: 5.0,
-    beam_diameter_um: 80.0,
-    straggle_factor: 0.25,
+    beam_diameter_um: 40.0,
+    straggle_factor: 0.06,
     depth_scale: 0.22,
     sputtering: true,
     uses_shots: true,
@@ -187,8 +189,8 @@ const EQUIPMENT = [
     default_energy: 50.0,
     min_energy: 1.0,
     max_energy: 200.0,
-    beam_diameter_um: 120.0,
-    straggle_factor: 0.35,
+    beam_diameter_um: 50.0,
+    straggle_factor: 0.08,
     depth_scale: 1.6,
     sputtering: true,
     uses_shots: true,
@@ -208,8 +210,8 @@ const EQUIPMENT = [
     default_energy: 1.5,
     min_energy: 0.05,
     max_energy: 15.0,
-    beam_diameter_um: 40.0,
-    straggle_factor: 0.2,
+    beam_diameter_um: 20.0,
+    straggle_factor: 0.06,
     depth_scale: 12.0,
     sputtering: true,
     uses_shots: true,
@@ -240,6 +242,11 @@ function ionDepthNm(energyKeV, number, density) {
 
 function photonDepthNm(energyKeV, density) {
   const imfp = PHOTON_K * energyKeV ** 0.5 / density ** 0.5;
+  return 3.0 * imfp;
+}
+
+function augerEscapeNm(density) {
+  const imfp = AUGER_K * AUGER_KE_KEV ** 0.5 / density ** 0.5;
   return 3.0 * imfp;
 }
 
@@ -280,7 +287,9 @@ function simulate(element, equipmentKey, energyKeV, shots) {
   const density = Number(element.density) || 1.0;
 
   let depthNm;
-  if (eq.probe === "electron") {
+  if (eq.key === "aes") {
+    depthNm = augerEscapeNm(density);
+  } else if (eq.probe === "electron") {
     depthNm = electronDepthNm(energy, mass, number, density);
   } else if (eq.probe === "ion") {
     depthNm = ionDepthNm(energy, number, density);

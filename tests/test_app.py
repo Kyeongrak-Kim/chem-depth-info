@@ -138,6 +138,29 @@ def test_epma_is_wds_and_eds_is_separate():
     assert eds["width_um"] > wds["width_um"]
 
 
+SI = {"symbol": "Si", "name": "Silicon", "number": 14, "density": 2.33, "atomic_mass": 28.085}
+
+
+def test_routine_spot_widths_match_typical_practice():
+    """Analysis width should look like a routine spot, not a fat pear + huge raster."""
+    assert simulate(SI, "epma")["width_um"] < 4.0
+    assert simulate(SI, "eds")["width_um"] < 5.0
+    assert simulate(SI, "eds")["width_um"] > simulate(SI, "epma")["width_um"]
+    assert simulate(SI, "sims")["width_um"] < 15.0
+    assert simulate(SI, "xps")["width_um"] < 80.0
+    assert simulate(SI, "aes")["width_um"] < 0.08
+    assert simulate(SI, "libs")["width_um"] < 70.0
+    assert simulate(SI, "laicpms")["width_um"] < 30.0
+    assert simulate(SI, "ldims")["width_um"] < 50.0
+    # Glow discharge really is millimetre-scale.
+    assert simulate(SI, "gdoes")["width_um"] > 1000.0
+
+
+def test_aes_uses_escape_depth_not_kanaya_range():
+    aes = simulate(FE, "aes")
+    assert aes["depth_nm"] < 20.0
+
+
 @pytest.mark.parametrize("key", ["gdms", "ldims", "libs", "laicpms"])
 def test_more_shots_go_deeper(key):
     eq = EQUIPMENT[key]

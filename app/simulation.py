@@ -7,16 +7,24 @@ element (mass, atomic number, density) and the chosen instrument / beam energy
 
 Four probe families are modelled:
 
-* ``electron`` – electron-probe techniques (AES, EDS, EPMA/WDS). Penetration
-  uses the Kanaya–Okayama electron range.
+* ``electron`` – electron-probe techniques (EDS, EPMA/WDS). Depth uses the
+  Kanaya–Okayama electron range. Width is a Castaing/Reed ionization pear:
+  probe diameter plus a fraction of that range (not 2× the full range).
+  AES is the exception: the *detected* signal is Auger electrons, so depth is
+  an escape depth (~3λ) and width is essentially the focused beam.
 * ``ion`` – sputter / glow-discharge techniques (SIMS, GD-OES, GD-MS).
-  Penetration uses an empirical projected-range expression.
-* ``photon`` – photoelectron spectroscopy (XPS). Sampling depth is derived from
-  a simplified inelastic mean free path.
+  Depth uses an LSS-like empirical projected range. Width is the raster /
+  anode diameter; keV-ion lateral straggle is only nanometres.
+* ``photon`` – photoelectron spectroscopy (XPS). Sampling depth is ~3× a
+  simplified inelastic mean free path (Tanuma–Powell–Penn style). Width is
+  the X-ray spot, not the electron escape radius.
 * ``laser`` – pulsed optical techniques (LDI-MS, LIBS, LA-ICP-MS). Single-pulse
   ablation depth scales with pulse energy and is accumulated over shots.
+  Width is the focused spot; craters widen only slightly with depth.
 
 All depths are returned in nanometres and lateral widths in micrometres.
+Spot diameters are routine-analysis defaults (not the largest raster / anode
+a given instrument can use).
 """
 
 from __future__ import annotations
@@ -65,8 +73,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=5.0,
             min_energy=0.5,
             max_energy=25.0,
-            beam_diameter_um=30.0,
-            straggle_factor=0.5,
+            beam_diameter_um=10.0,
+            straggle_factor=0.05,
             depth_scale=1.0,
             sputtering=True,
         ),
@@ -83,7 +91,7 @@ EQUIPMENT: dict[str, Equipment] = {
             min_energy=5.0,
             max_energy=40.0,
             beam_diameter_um=2500.0,
-            straggle_factor=0.1,
+            straggle_factor=0.01,
             depth_scale=9.0,
             sputtering=True,
         ),
@@ -101,7 +109,7 @@ EQUIPMENT: dict[str, Equipment] = {
             min_energy=0.5,
             max_energy=5.0,
             beam_diameter_um=2000.0,
-            straggle_factor=0.12,
+            straggle_factor=0.01,
             depth_scale=14.0,
             sputtering=True,
             uses_shots=True,
@@ -123,8 +131,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=1.4,
             min_energy=0.2,
             max_energy=1.5,
-            beam_diameter_um=400.0,
-            straggle_factor=0.05,
+            beam_diameter_um=50.0,
+            straggle_factor=0.02,
             depth_scale=1.0,
             sputtering=False,
         ),
@@ -140,8 +148,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=5.0,
             min_energy=1.0,
             max_energy=25.0,
-            beam_diameter_um=0.05,
-            straggle_factor=0.7,
+            beam_diameter_um=0.03,
+            straggle_factor=0.2,
             depth_scale=1.0,
             sputtering=False,
         ),
@@ -157,8 +165,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=15.0,
             min_energy=5.0,
             max_energy=30.0,
-            beam_diameter_um=1.5,
-            straggle_factor=0.95,
+            beam_diameter_um=0.2,
+            straggle_factor=0.40,
             depth_scale=1.08,
             sputtering=False,
         ),
@@ -175,8 +183,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=15.0,
             min_energy=5.0,
             max_energy=30.0,
-            beam_diameter_um=1.0,
-            straggle_factor=0.8,
+            beam_diameter_um=0.2,
+            straggle_factor=0.28,
             depth_scale=1.0,
             sputtering=False,
         ),
@@ -192,8 +200,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=0.12,
             min_energy=0.01,
             max_energy=5.0,
-            beam_diameter_um=80.0,
-            straggle_factor=0.25,
+            beam_diameter_um=40.0,
+            straggle_factor=0.06,
             depth_scale=0.22,
             sputtering=True,
             uses_shots=True,
@@ -215,8 +223,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=50.0,
             min_energy=1.0,
             max_energy=200.0,
-            beam_diameter_um=120.0,
-            straggle_factor=0.35,
+            beam_diameter_um=50.0,
+            straggle_factor=0.08,
             depth_scale=1.6,
             sputtering=True,
             uses_shots=True,
@@ -238,8 +246,8 @@ EQUIPMENT: dict[str, Equipment] = {
             default_energy=1.5,
             min_energy=0.05,
             max_energy=15.0,
-            beam_diameter_um=40.0,
-            straggle_factor=0.2,
+            beam_diameter_um=20.0,
+            straggle_factor=0.06,
             depth_scale=12.0,
             sputtering=True,
             uses_shots=True,
@@ -257,6 +265,9 @@ EQUIPMENT: dict[str, Equipment] = {
 _ION_RANGE_K = 20.0
 # Photon sampling-depth constant (3 x inelastic mean free path).
 _PHOTON_K = 6.0
+# Auger electrons are slower (~0.5 keV); 3λ is a few nanometres.
+_AUGER_K = 4.0
+_AUGER_KE_KEV = 0.5
 # Single-pulse optical/thermal ablation scale (nm at ~1 mJ into a light target).
 _LASER_K = 1800.0
 
@@ -275,6 +286,12 @@ def _ion_depth_nm(energy_keV: float, number: int, density: float) -> float:
 def _photon_depth_nm(energy_keV: float, density: float) -> float:
     """Photoelectron sampling depth (~3x inelastic mean free path) in nm."""
     imfp = _PHOTON_K * (energy_keV ** 0.5) / (density ** 0.5)
+    return 3.0 * imfp
+
+
+def _auger_escape_nm(density: float) -> float:
+    """Auger information depth (~3λ at ~0.5 keV), not the primary-electron range."""
+    imfp = _AUGER_K * (_AUGER_KE_KEV ** 0.5) / (density ** 0.5)
     return 3.0 * imfp
 
 
@@ -321,7 +338,10 @@ def simulate(
     number = int(element.get("number") or 1)
     density = float(element.get("density") or 1.0)
 
-    if eq.probe == "electron":
+    if eq.key == "aes":
+        # Detected Auger electrons escape from ~3λ, not the Kanaya–Okayama range.
+        depth_nm = _auger_escape_nm(density)
+    elif eq.probe == "electron":
         depth_nm = _electron_depth_nm(energy, mass, number, density)
     elif eq.probe == "ion":
         depth_nm = _ion_depth_nm(energy, number, density)
@@ -338,6 +358,10 @@ def simulate(
         depth_nm *= (shot_count / max(eq.default_shots, 1)) ** 0.85
 
     depth_um = depth_nm / 1000.0
+    # Probe/raster/spot diameter plus a small lateral flare.
+    # Electrons: Castaing pear ≈ k·R (k = 2·straggle, ~0.5–0.8 for EDS/WDS).
+    # Ions / X-rays / lasers: the analysed patch is the illuminated spot;
+    # extra width with depth is only a slight wall taper.
     width_um = eq.beam_diameter_um + 2.0 * eq.straggle_factor * depth_um
 
     if eq.uses_shots:
