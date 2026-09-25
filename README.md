@@ -1,6 +1,8 @@
 # chem-depth-info
 
-화학 분석 장비에 따른 주기율표에서 선택된 원소가 얼마나 깊이, 넓게 파고 들어가는지 시뮬레이션으로 알아보는 Web app. 파이썬 기반이며 모바일/데스크톱 버전 양쪽 다 지원.
+화학 분석 장비에 따른 주기율표에서 선택된 원소가 얼마나 깊이, 넓게 파고 들어가는지 시뮬레이션으로 알아보는 Web app. 모바일/데스크톱 양쪽을 지원합니다.
+
+**공개 사이트 (GitHub Pages, 무료):** https://kyeongrak-kim.github.io/chem-depth-info/
 
 ## 개요
 
@@ -10,9 +12,9 @@
 
 ## 기술 스택
 
-- Backend: Python 3.12 + [Flask](https://flask.palletsprojects.com/)
-- Frontend: 순수 HTML/CSS/JavaScript (Canvas 시각화)
-- 원소 데이터: [`mendeleev`](https://mendeleev.readthedocs.io/) 로 생성한 정적 JSON (`app/static/data/elements.json`)
+- 공개 사이트: 정적 HTML/CSS/JavaScript (`docs/`). 시뮬레이션은 브라우저에서 계산합니다.
+- 로컬/Codespaces 개발 서버: Python 3.12 + [Flask](https://flask.palletsprojects.com/)
+- 원소 데이터: [`mendeleev`](https://mendeleev.readthedocs.io/) 로 생성한 정적 JSON (`docs/data/elements.json`)
 
 ## 로컬 실행
 
@@ -33,7 +35,16 @@ python app.py            # http://localhost:5000
 2. 컨테이너가 준비되면 `postStartCommand`가 Flask를 **5000** 포트에서 자동으로 켭니다.
 3. Codespaces가 미리보기 탭을 열거나, `https://<codespace이름>-5000.app.github.dev` 로 페이지가 열립니다.
 
-GitHub Pages에는 이 Flask 앱을 그대로 올릴 수 없습니다. 깊이/폭 계산이 `POST /api/simulate` Python API에 있어서, Pages용으로는 시뮬레이션을 JavaScript로 옮긴 **정적 버전을 새로** 만들어야 합니다.
+## GitHub Pages
+
+정적 사이트는 `docs/` 에 있습니다. `main`에 머지되면 [GitHub Actions](.github/workflows/pages.yml)가 [https://kyeongrak-kim.github.io/chem-depth-info/](https://kyeongrak-kim.github.io/chem-depth-info/) 로 배포합니다.
+
+로컬에서 정적 버전만 보려면:
+
+```bash
+python3 -m http.server 8080 --directory docs
+# http://127.0.0.1:8080
+```
 
 ## 개발 (테스트 · 데이터 재생성)
 
