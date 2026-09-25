@@ -6,6 +6,7 @@ import os
 import pytest
 
 from app import create_app
+from app.display import cross_section_svg, format_length
 from app.simulation import EQUIPMENT, simulate
 
 FE = {"symbol": "Fe", "name": "Iron", "number": 26, "density": 7.87, "atomic_mass": 55.845}
@@ -86,3 +87,16 @@ def test_api_simulate_bad_element(client):
 def test_api_simulate_bad_equipment(client):
     resp = client.post("/api/simulate", json={"symbol": "Fe", "equipment": "nope"})
     assert resp.status_code == 400
+
+
+def test_format_length_units():
+    assert format_length(0.00628).endswith("nm")
+    assert "µm" in format_length(30.0) or "μm" in format_length(30.0)
+    assert format_length(2500.0).endswith("mm")
+
+
+def test_cross_section_svg_contains_labels():
+    svg = cross_section_svg(simulate(FE, "sims", 5))
+    assert "<svg" in svg
+    assert "깊이" in svg
+    assert "폭" in svg
