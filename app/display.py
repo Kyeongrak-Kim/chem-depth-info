@@ -41,6 +41,14 @@ STREAMLIT_CSS = """
     padding: 16px 14px 18px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   }
+  .cd-panel {
+    background: #141b30;
+    border: 1px solid #263156;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    margin: 12px 0 16px;
+  }
   [data-testid="stSlider"] label { color: #9aa6c4 !important; }
   [data-testid="stSlider"] div[data-baseweb="slider"] { padding-top: 4px; }
 
@@ -91,8 +99,8 @@ STREAMLIT_CSS = """
   }
   .cd-element:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 2; }
   .cd-element.selected { outline-color: #fff; box-shadow: 0 0 0 2px #f6a94b; z-index: 3; }
-  .cd-element .num { position: absolute; top: 2px; left: 4px; font-size: 0.5rem; opacity: 0.75; }
-  .cd-element .sym { font-size: clamp(0.55rem, 1.05vw, 0.95rem); line-height: 1; }
+  .cd-element .num { position: absolute; top: 2px; left: 4px; font-size: 0.58rem; opacity: 0.75; }
+  .cd-element .sym { font-size: clamp(0.72rem, 1.25vw, 1.05rem); line-height: 1; }
   .cat-nonmetals { --cat: #7ee787; }
   .cat-noble-gases { --cat: #a5d8ff; }
   .cat-alkali-metals { --cat: #ffa8a8; }

@@ -42,10 +42,12 @@ if eq_key not in valid_eq:
 eq = EQUIPMENT[eq_key]
 energy = st.session_state.get(f"energy-{eq_key}", float(eq.default_energy))
 
-table, controls, results = st.columns((1.45, 0.85, 1.0), gap="medium")
+st.markdown(
+    f'<section class="cd-panel">{periodic_table_html(elements, symbol, eq_key)}</section>',
+    unsafe_allow_html=True,
+)
 
-with table:
-    st.markdown(periodic_table_html(elements, symbol, eq_key), unsafe_allow_html=True)
+controls, results = st.columns((0.9, 1.1), gap="medium")
 
 with controls:
     st.markdown(equipment_html(catalog, eq_key, symbol), unsafe_allow_html=True)
