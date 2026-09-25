@@ -14,6 +14,7 @@ CATEGORY_LABELS = {
     "metalloids": "준금속",
     "halogens": "할로겐",
     "post-transition-metals": "전이후 금속",
+    "poor-metals": "전이후 금속",
     "transition-metals": "전이 금속",
     "lanthanides": "란타넘족",
     "actinides": "악티늄족",
@@ -153,7 +154,7 @@ STREAMLIT_CSS = """
   .cat-alkaline-earth-metals { --cat: #ffd8a8; }
   .cat-metalloids { --cat: #b2f2bb; }
   .cat-halogens { --cat: #99e9f2; }
-  .cat-post-transition-metals { --cat: #bac8ff; }
+  .cat-post-transition-metals, .cat-poor-metals { --cat: #bac8ff; }
   .cat-transition-metals { --cat: #ffec99; }
   .cat-lanthanides { --cat: #eebefa; }
   .cat-actinides { --cat: #fcc2d7; }

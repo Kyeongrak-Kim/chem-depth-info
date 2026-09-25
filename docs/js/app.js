@@ -17,6 +17,7 @@ const CATEGORY_LABELS = {
   "metalloids": "준금속",
   "halogens": "할로겐",
   "post-transition-metals": "전이후 금속",
+  "poor-metals": "전이후 금속",
   "transition-metals": "전이 금속",
   "lanthanides": "란타넘족",
   "actinides": "악티늄족",

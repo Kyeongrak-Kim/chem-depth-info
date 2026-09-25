@@ -147,7 +147,7 @@ body {
 .cat-alkaline-earth-metals { --cat: #ffd8a8; }
 .cat-metalloids { --cat: #b2f2bb; }
 .cat-halogens { --cat: #99e9f2; }
-.cat-post-transition-metals { --cat: #bac8ff; }
+.cat-post-transition-metals, .cat-poor-metals { --cat: #bac8ff; }
 .cat-transition-metals { --cat: #ffec99; }
 .cat-lanthanides { --cat: #eebefa; }
 .cat-actinides { --cat: #fcc2d7; }
