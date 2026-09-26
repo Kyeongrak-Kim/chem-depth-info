@@ -107,6 +107,21 @@ def test_cross_section_svg_contains_labels():
     assert "폭" in svg
 
 
+def test_epma_svg_is_a_pear_and_laser_width_is_the_beam():
+    pear = cross_section_svg(simulate(SI, "epma"))
+    assert "volume-pear" in pear
+    assert "배 깊이" in pear
+    assert "배 폭" in pear
+    for key in ("ldims", "libs", "laicpms"):
+        result = simulate(SI, key)
+        assert result["volume_shape"] == "beam"
+        assert result["width_um"] == pytest.approx(EQUIPMENT[key].beam_diameter_um)
+    beam = cross_section_svg(simulate(SI, "libs"))
+    assert "volume-beam" in beam
+    assert simulate(SI, "eds")["volume_shape"] == "pear"
+    assert simulate(SI, "epma")["volume_shape"] == "pear"
+
+
 def test_periodic_table_html_marks_selection():
     from app import load_elements
 

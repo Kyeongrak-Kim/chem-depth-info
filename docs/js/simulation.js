@@ -169,7 +169,7 @@ const EQUIPMENT = [
     min_energy: 0.01,
     max_energy: 5.0,
     beam_diameter_um: 40.0,
-    straggle_factor: 0.06,
+    straggle_factor: 0.0,
     depth_scale: 0.22,
     sputtering: true,
     uses_shots: true,
@@ -190,7 +190,7 @@ const EQUIPMENT = [
     min_energy: 1.0,
     max_energy: 200.0,
     beam_diameter_um: 50.0,
-    straggle_factor: 0.08,
+    straggle_factor: 0.0,
     depth_scale: 1.6,
     sputtering: true,
     uses_shots: true,
@@ -211,7 +211,7 @@ const EQUIPMENT = [
     min_energy: 0.05,
     max_energy: 15.0,
     beam_diameter_um: 20.0,
-    straggle_factor: 0.06,
+    straggle_factor: 0.0,
     depth_scale: 12.0,
     sputtering: true,
     uses_shots: true,
@@ -306,6 +306,10 @@ function simulate(element, equipmentKey, energyKeV, shots) {
 
   const depthUm = depthNm / 1000.0;
   const widthUm = eq.beam_diameter_um + 2.0 * eq.straggle_factor * depthUm;
+  let volumeShape = "spot";
+  if (eq.probe === "laser") volumeShape = "beam";
+  else if (eq.key === "eds" || eq.key === "epma") volumeShape = "pear";
+  else if (eq.key === "aes") volumeShape = "escape";
   let craterDepthUm = 0.0;
   if (eq.uses_shots) {
     craterDepthUm = depthUm * 1.35;
@@ -324,6 +328,8 @@ function simulate(element, equipmentKey, energyKeV, shots) {
     energy_keV: roundTo(energy, 3),
     energy_unit: eq.energy_unit,
     energy_label: eq.energy_label,
+    beam_diameter_um: eq.beam_diameter_um,
+    volume_shape: volumeShape,
     depth_nm: roundTo(depthNm, 3),
     depth_um: roundTo(depthUm, 5),
     width_um: roundTo(widthUm, 3),

@@ -34,11 +34,11 @@ const PROBE_LABELS = {
 };
 
 const MODEL_NOTES = {
-  electron: "깊이: Kanaya–Okayama 전자 비정. 폭: 프로브 직경 + Castaing/Reed 상호작용 배(pear).",
+  electron: "깊이: Kanaya–Okayama 전자 비정, 단면은 배(pear). 입구는 빔, 최대 폭은 배의 가장 넓은 곳.",
   aes: "깊이: 오제 전자 탈출 깊이(~3λ). 폭: 집속 빔 직경(일차 전자 비정이 아님).",
   ion: "깊이: LSS형 이온 투사 범위. 폭: 래스터/양극 직경(이온 횡방향 straggle은 nm).",
   photon: "깊이: 광전자 IMFP의 약 3배(TPP형). 폭: X선 스팟 크기.",
-  laser: "깊이: 펄스 에너지·shot에 따른 삭마. 폭: 집속 레이저 스팟(깊이에 따른 약간 벌어짐).",
+  laser: "깊이: 펄스 에너지·shot에 따른 삭마. 폭: 집속 빔 직경.",
 };
 
 function buildTable() {
@@ -212,6 +212,12 @@ function render(data) {
     craterMetric.hidden = true;
   }
 
+  const shape = data.volume_shape || "spot";
+  document.getElementById("m-depth-label").textContent =
+    shape === "pear" ? "배(pear) 깊이" : shape === "beam" ? "삭마 깊이" : "침투 깊이";
+  document.getElementById("m-width-label").textContent =
+    shape === "pear" ? "배 최대 폭" : shape === "beam" ? "빔 직경" : "분석 폭";
+
   const unit = data.energy_unit || "keV";
   const shotsBit = data.uses_shots ? ` × ${data.shots} shots` : "";
   document.getElementById("viz-caption").textContent =
@@ -228,6 +234,65 @@ function logScale(um) {
   const hi = 4;
   const v = Math.log10(Math.max(um, 1e-4));
   return Math.min(1, Math.max(0, (v - lo) / (hi - lo)));
+}
+
+function drawVolume(ctx, data, cx, surfaceY, halfW, depthPx) {
+  const bottom = surfaceY + depthPx;
+  const shape = data.volume_shape || "spot";
+  const grad = ctx.createLinearGradient(0, surfaceY, 0, bottom);
+  grad.addColorStop(0, "rgba(246, 169, 75, 0.9)");
+  grad.addColorStop(1, "rgba(246, 169, 75, 0.12)");
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  if (shape === "pear") {
+    const neck = halfW * 0.22;
+    const belly = surfaceY + depthPx * 0.55;
+    ctx.moveTo(cx - neck, surfaceY);
+    ctx.bezierCurveTo(cx - neck, surfaceY + depthPx * 0.16, cx - halfW, surfaceY + depthPx * 0.30, cx - halfW, belly);
+    ctx.bezierCurveTo(cx - halfW, surfaceY + depthPx * 0.82, cx - halfW * 0.42, bottom, cx, bottom);
+    ctx.bezierCurveTo(cx + halfW * 0.42, bottom, cx + halfW, surfaceY + depthPx * 0.82, cx + halfW, belly);
+    ctx.bezierCurveTo(cx + halfW, surfaceY + depthPx * 0.30, cx + neck, surfaceY + depthPx * 0.16, cx + neck, surfaceY);
+  } else if (shape === "beam") {
+    const inset = halfW * 0.9;
+    ctx.moveTo(cx - halfW, surfaceY);
+    ctx.lineTo(cx - inset, bottom);
+    ctx.lineTo(cx + inset, bottom);
+    ctx.lineTo(cx + halfW, surfaceY);
+  } else {
+    ctx.moveTo(cx - halfW, surfaceY);
+    ctx.bezierCurveTo(cx - halfW, surfaceY + depthPx * 0.7, cx - halfW * 0.4, bottom, cx, bottom);
+    ctx.bezierCurveTo(cx + halfW * 0.4, bottom, cx + halfW, surfaceY + depthPx * 0.7, cx + halfW, surfaceY);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#f6a94b";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.strokeStyle = "#e8ecf7";
+  ctx.fillStyle = "#e8ecf7";
+  ctx.lineWidth = 1;
+  if (shape === "pear") {
+    const belly = surfaceY + depthPx * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(cx - halfW, belly);
+    ctx.lineTo(cx + halfW, belly);
+    ctx.stroke();
+    ctx.fillText(`배 폭 ${fmtLength(data.width_um)}`, cx + halfW + 4, belly + 4);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(cx - halfW, surfaceY - 2);
+    ctx.lineTo(cx + halfW, surfaceY - 2);
+    ctx.stroke();
+    const widthLabel = shape === "beam" ? `빔 ${fmtLength(data.width_um)}` : `폭 ${fmtLength(data.width_um)}`;
+    ctx.fillText(widthLabel, cx + halfW + 4, surfaceY + 4);
+  }
+  ctx.beginPath();
+  ctx.moveTo(cx, surfaceY);
+  ctx.lineTo(cx, bottom);
+  ctx.stroke();
+  const depthLabel = shape === "pear" ? `배 깊이 ${fmtLength(data.depth_um)}` : `깊이 ${fmtLength(data.depth_um)}`;
+  ctx.fillText(depthLabel, cx + 6, bottom + 14);
 }
 
 function drawViz(data) {
@@ -264,42 +329,7 @@ function drawViz(data) {
   const depthPx = Math.max(6, depthFrac * usableH);
   const cx = marginX + usableW / 2;
 
-  const grad = ctx.createLinearGradient(0, surfaceY, 0, surfaceY + depthPx);
-  grad.addColorStop(0, "rgba(246, 169, 75, 0.85)");
-  grad.addColorStop(1, "rgba(246, 169, 75, 0.05)");
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.moveTo(cx - halfW, surfaceY);
-  ctx.bezierCurveTo(
-    cx - halfW, surfaceY + depthPx * 0.7,
-    cx - halfW * 0.4, surfaceY + depthPx,
-    cx, surfaceY + depthPx
-  );
-  ctx.bezierCurveTo(
-    cx + halfW * 0.4, surfaceY + depthPx,
-    cx + halfW, surfaceY + depthPx * 0.7,
-    cx + halfW, surfaceY
-  );
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = "#f6a94b";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  ctx.strokeStyle = "#e8ecf7";
-  ctx.fillStyle = "#e8ecf7";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(cx - halfW, surfaceY - 2);
-  ctx.lineTo(cx + halfW, surfaceY - 2);
-  ctx.stroke();
-  ctx.fillText(`폭 ${fmtLength(data.width_um)}`, cx + halfW + 4, surfaceY + 4);
-
-  ctx.beginPath();
-  ctx.moveTo(cx, surfaceY);
-  ctx.lineTo(cx, surfaceY + depthPx);
-  ctx.stroke();
-  ctx.fillText(`깊이 ${fmtLength(data.depth_um)}`, cx + 6, surfaceY + depthPx + 14);
+  drawVolume(ctx, data, cx, surfaceY, halfW, depthPx);
 
   if (data.sputtering && data.crater_depth_um > data.depth_um) {
     const craterFrac = logScale(data.crater_depth_um);

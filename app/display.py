@@ -30,8 +30,8 @@ PROBE_LABELS = {
 
 MODEL_NOTES = {
     "electron": (
-        "깊이: Kanaya–Okayama 전자 비정. "
-        "폭: 프로브 직경 + Castaing/Reed 상호작용 배(pear)."
+        "깊이: Kanaya–Okayama 전자 비정, 단면은 배(pear). "
+        "입구는 빔, 최대 폭은 배의 가장 넓은 곳."
     ),
     "aes": (
         "깊이: 오제 전자 탈출 깊이(~3λ). "
@@ -47,7 +47,7 @@ MODEL_NOTES = {
     ),
     "laser": (
         "깊이: 펄스 에너지·shot에 따른 삭마. "
-        "폭: 집속 레이저 스팟(깊이에 따른 약간 벌어짐)."
+        "폭: 집속 빔 직경."
     ),
 }
 
@@ -335,6 +335,13 @@ def results_html(result: dict, symbol: str) -> str:
             '<div class="cd-metric"><span class="cd-metric-label">Shot 수</span>'
             f'<span class="cd-metric-value">{int(result["shots"])}</span></div>'
         )
+    shape = result.get("volume_shape", "spot")
+    if shape == "pear":
+        depth_label, width_label = "배(pear) 깊이", "배 최대 폭"
+    elif shape == "beam":
+        depth_label, width_label = "삭마 깊이", "빔 직경"
+    else:
+        depth_label, width_label = "침투 깊이", "분석 폭"
     unit = result.get("energy_unit", "keV")
     shots_bit = f' × {int(result["shots"])} shots' if result.get("uses_shots") else ""
     note_key = "aes" if result["equipment"] == "aes" else result["probe"]
@@ -349,9 +356,9 @@ def results_html(result: dict, symbol: str) -> str:
     return (
         '<div class="cd-panel-title"><h2>결과</h2></div>'
         '<div class="cd-metrics">'
-        '<div class="cd-metric"><span class="cd-metric-label">침투 깊이</span>'
+        f'<div class="cd-metric"><span class="cd-metric-label">{depth_label}</span>'
         f'<span class="cd-metric-value">{html.escape(format_length(result["depth_um"]))}</span></div>'
-        '<div class="cd-metric"><span class="cd-metric-label">분석 폭</span>'
+        f'<div class="cd-metric"><span class="cd-metric-label">{width_label}</span>'
         f'<span class="cd-metric-value">{html.escape(format_length(result["width_um"]))}</span></div>'
         '<div class="cd-metric"><span class="cd-metric-label">종횡비 (깊이/폭)</span>'
         f'<span class="cd-metric-value">{result["aspect_ratio"]:.3f}</span></div>'
@@ -386,13 +393,59 @@ def cross_section_svg(result: dict) -> str:
     depth_px = max(6.0, log_scale(result["depth_um"]) * usable_h)
     bottom = surface_y + depth_px
 
+    shape = result.get("volume_shape", "spot")
+    neck = half_w * 0.22
+    belly_y = surface_y + depth_px * 0.55
+    inset = half_w * 0.9
+    if shape == "pear":
+        body = (
+            f'<path class="volume-pear" d="M {cx - neck} {surface_y} '
+            f'C {cx - neck} {surface_y + depth_px * 0.16}, {cx - half_w} {surface_y + depth_px * 0.30}, {cx - half_w} {belly_y} '
+            f'C {cx - half_w} {surface_y + depth_px * 0.82}, {cx - half_w * 0.42} {bottom}, {cx} {bottom} '
+            f'C {cx + half_w * 0.42} {bottom}, {cx + half_w} {surface_y + depth_px * 0.82}, {cx + half_w} {belly_y} '
+            f'C {cx + half_w} {surface_y + depth_px * 0.30}, {cx + neck} {surface_y + depth_px * 0.16}, {cx + neck} {surface_y} Z" '
+            f'fill="rgba(246,169,75,0.55)" stroke="#f6a94b"/>'
+        )
+        width_mark = (
+            f'<line x1="{cx - half_w}" y1="{belly_y}" x2="{cx + half_w}" y2="{belly_y}" stroke="#e8ecf7"/>'
+            f'<text x="{cx + half_w + 4}" y="{belly_y + 4}" fill="#e8ecf7" font-size="12">'
+            f'배 폭 {format_length(result["width_um"])}</text>'
+        )
+        depth_label = f'배 깊이 {format_length(result["depth_um"])}'
+    elif shape == "beam":
+        body = (
+            f'<path class="volume-beam" d="M {cx - half_w} {surface_y} '
+            f'L {cx - inset} {bottom} L {cx + inset} {bottom} L {cx + half_w} {surface_y} Z" '
+            f'fill="rgba(246,169,75,0.55)" stroke="#f6a94b"/>'
+        )
+        width_mark = (
+            f'<line x1="{cx - half_w}" y1="{surface_y - 2}" x2="{cx + half_w}" y2="{surface_y - 2}" stroke="#e8ecf7"/>'
+            f'<text x="{cx + half_w + 4}" y="{surface_y + 4}" fill="#e8ecf7" font-size="12">'
+            f'빔 {format_length(result["width_um"])}</text>'
+        )
+        depth_label = f'깊이 {format_length(result["depth_um"])}'
+    else:
+        body = (
+            f'<path class="volume-spot" d="M {cx - half_w} {surface_y} '
+            f'C {cx - half_w} {surface_y + depth_px * 0.7}, {cx - half_w * 0.4} {bottom}, {cx} {bottom} '
+            f'C {cx + half_w * 0.4} {bottom}, {cx + half_w} {surface_y + depth_px * 0.7}, {cx + half_w} {surface_y} Z" '
+            f'fill="rgba(246,169,75,0.55)" stroke="#f6a94b"/>'
+        )
+        width_mark = (
+            f'<line x1="{cx - half_w}" y1="{surface_y - 2}" x2="{cx + half_w}" y2="{surface_y - 2}" stroke="#e8ecf7"/>'
+            f'<text x="{cx + half_w + 4}" y="{surface_y + 4}" fill="#e8ecf7" font-size="12">'
+            f'폭 {format_length(result["width_um"])}</text>'
+        )
+        depth_label = f'깊이 {format_length(result["depth_um"])}'
+
     crater = ""
-    if result["sputtering"] and result["crater_depth_um"] > result["depth_um"]:
+    if result["sputtering"] and result["crater_depth_um"] > result["depth_um"] and shape != "pear":
         crater_px = min(usable_h, max(depth_px, log_scale(result["crater_depth_um"]) * usable_h))
+        lip = half_w if shape == "beam" else half_w
         crater = (
             f'<polyline fill="none" stroke="#5ad1c8" stroke-dasharray="5 4" '
-            f'points="{cx - half_w},{surface_y} {cx - half_w * 0.6},{surface_y + crater_px} '
-            f'{cx + half_w * 0.6},{surface_y + crater_px} {cx + half_w},{surface_y}"/>'
+            f'points="{cx - lip},{surface_y} {cx - lip * 0.9},{surface_y + crater_px} '
+            f'{cx + lip * 0.9},{surface_y + crater_px} {cx + lip},{surface_y}"/>'
             f'<text x="{margin_x + 4}" y="{surface_y + crater_px + 14}" fill="#5ad1c8" font-size="12">'
             f'크레이터 {format_length(result["crater_depth_um"])}</text>'
         )
@@ -402,14 +455,10 @@ def cross_section_svg(result: dict) -> str:
   <rect x="{margin_x}" y="{surface_y}" width="{usable_w}" height="{usable_h}" fill="#111a33" stroke="#2b3a66"/>
   <line x1="{margin_x}" y1="{surface_y}" x2="{width - margin_x}" y2="{surface_y}" stroke="#5ad1c8" stroke-width="2"/>
   <text x="{margin_x}" y="{surface_y - 8}" fill="#9aa6c4" font-size="12">표면 (surface)</text>
-  <path d="M {cx - half_w} {surface_y}
-           C {cx - half_w} {surface_y + depth_px * 0.7}, {cx - half_w * 0.4} {bottom}, {cx} {bottom}
-           C {cx + half_w * 0.4} {bottom}, {cx + half_w} {surface_y + depth_px * 0.7}, {cx + half_w} {surface_y} Z"
-        fill="rgba(246,169,75,0.55)" stroke="#f6a94b"/>
-  <line x1="{cx - half_w}" y1="{surface_y - 2}" x2="{cx + half_w}" y2="{surface_y - 2}" stroke="#e8ecf7"/>
-  <text x="{cx + half_w + 4}" y="{surface_y + 4}" fill="#e8ecf7" font-size="12">폭 {format_length(result["width_um"])}</text>
+  {body}
+  {width_mark}
   <line x1="{cx}" y1="{surface_y}" x2="{cx}" y2="{bottom}" stroke="#e8ecf7"/>
-  <text x="{cx + 6}" y="{bottom + 14}" fill="#e8ecf7" font-size="12">깊이 {format_length(result["depth_um"])}</text>
+  <text x="{cx + 6}" y="{bottom + 14}" fill="#e8ecf7" font-size="12">{depth_label}</text>
   {crater}
 </svg>
 """

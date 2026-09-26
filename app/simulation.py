@@ -20,7 +20,7 @@ Four probe families are modelled:
   the X-ray spot, not the electron escape radius.
 * ``laser`` – pulsed optical techniques (LDI-MS, LIBS, LA-ICP-MS). Single-pulse
   ablation depth scales with pulse energy and is accumulated over shots.
-  Width is the focused spot; craters widen only slightly with depth.
+  The analysed width is the focused beam diameter itself.
 
 All depths are returned in nanometres and lateral widths in micrometres.
 Spot diameters are routine-analysis defaults (not the largest raster / anode
@@ -201,7 +201,7 @@ EQUIPMENT: dict[str, Equipment] = {
             min_energy=0.01,
             max_energy=5.0,
             beam_diameter_um=40.0,
-            straggle_factor=0.06,
+            straggle_factor=0.0,
             depth_scale=0.22,
             sputtering=True,
             uses_shots=True,
@@ -224,7 +224,7 @@ EQUIPMENT: dict[str, Equipment] = {
             min_energy=1.0,
             max_energy=200.0,
             beam_diameter_um=50.0,
-            straggle_factor=0.08,
+            straggle_factor=0.0,
             depth_scale=1.6,
             sputtering=True,
             uses_shots=True,
@@ -247,7 +247,7 @@ EQUIPMENT: dict[str, Equipment] = {
             min_energy=0.05,
             max_energy=15.0,
             beam_diameter_um=20.0,
-            straggle_factor=0.06,
+            straggle_factor=0.0,
             depth_scale=12.0,
             sputtering=True,
             uses_shots=True,
@@ -358,11 +358,18 @@ def simulate(
         depth_nm *= (shot_count / max(eq.default_shots, 1)) ** 0.85
 
     depth_um = depth_nm / 1000.0
-    # Probe/raster/spot diameter plus a small lateral flare.
-    # Electrons: Castaing pear ≈ k·R (k = 2·straggle, ~0.5–0.8 for EDS/WDS).
-    # Ions / X-rays / lasers: the analysed patch is the illuminated spot;
-    # extra width with depth is only a slight wall taper.
+    # EDS/EPMA: beam plus the Castaing pear (max diameter ≈ k·R).
+    # Lasers: the crater width is the focused beam. straggle_factor is 0.
+    # Ions / X-rays / AES: the analysed patch is the raster, anode, or spot.
     width_um = eq.beam_diameter_um + 2.0 * eq.straggle_factor * depth_um
+    if eq.probe == "laser":
+        volume_shape = "beam"
+    elif eq.key in {"eds", "epma"}:
+        volume_shape = "pear"
+    elif eq.key == "aes":
+        volume_shape = "escape"
+    else:
+        volume_shape = "spot"
 
     if eq.uses_shots:
         crater_depth_um = depth_um * 1.35
@@ -382,6 +389,8 @@ def simulate(
         "energy_keV": round(energy, 3),
         "energy_unit": eq.energy_unit,
         "energy_label": eq.energy_label,
+        "beam_diameter_um": eq.beam_diameter_um,
+        "volume_shape": volume_shape,
         "depth_nm": round(depth_nm, 3),
         "depth_um": round(depth_um, 5),
         "width_um": round(width_um, 3),
