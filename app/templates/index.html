@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d1c" />
+  <title>chem-depth-info · 화학 분석 깊이 시뮬레이터</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>chem-depth-info</h1>
+    <p class="tagline">분석 장비별 원소 침투 <strong>깊이·폭</strong> 시뮬레이터</p>
+  </header>
+
+  <main class="layout">
+    <section class="panel table-panel" aria-label="주기율표">
+      <div class="panel-title">
+        <h2>1 · 원소 선택</h2>
+        <span id="selected-label" class="pill">—</span>
+      </div>
+      <div id="periodic-table" class="periodic-table" role="grid"></div>
+      <ul class="legend" id="legend"></ul>
+    </section>
+
+    <section class="panel control-panel">
+      <div class="panel-title"><h2>2 · 분석 장비</h2></div>
+      <div id="equipment-list" class="equipment-list" role="radiogroup"></div>
+
+      <div class="energy-block">
+        <div class="energy-head">
+          <h3 id="energy-title">3 · 빔 에너지</h3>
+          <span id="energy-readout" class="pill pill-accent">— keV</span>
+        </div>
+        <input type="range" id="energy-slider" min="0" max="1" step="0.01" value="0" />
+        <div class="energy-scale"><span id="energy-min">—</span><span id="energy-max">—</span></div>
+      </div>
+
+      <div class="shots-block" id="shots-block" hidden>
+        <div class="energy-head">
+          <h3>4 · Shot 수</h3>
+          <span id="shots-readout" class="pill pill-accent">—</span>
+        </div>
+        <input type="range" id="shots-slider" min="1" max="100" step="1" value="1" />
+        <div class="energy-scale"><span id="shots-min">—</span><span id="shots-max">—</span></div>
+      </div>
+
+      <p id="equipment-desc" class="equipment-desc"></p>
+    </section>
+
+    <section class="panel result-panel">
+      <div class="panel-title"><h2>결과</h2></div>
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label" id="m-depth-label">침투 깊이</span>
+          <span class="metric-value" id="m-depth">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label" id="m-width-label">분석 폭</span>
+          <span class="metric-value" id="m-width">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">종횡비 (깊이/폭)</span>
+          <span class="metric-value" id="m-aspect">—</span>
+        </div>
+        <div class="metric" id="shots-metric" hidden>
+          <span class="metric-label">Shot 수</span>
+          <span class="metric-value" id="m-shots">—</span>
+        </div>
+        <div class="metric" id="crater-metric" hidden>
+          <span class="metric-label" id="crater-label">크레이터 깊이</span>
+          <span class="metric-value" id="m-crater">—</span>
+        </div>
+      </div>
+      <figure class="viz">
+        <canvas id="viz-canvas" width="640" height="360" aria-label="단면 시각화"></canvas>
+        <figcaption id="viz-caption">원소와 장비를 선택하면 단면이 그려집니다.</figcaption>
+        <p id="model-note" class="equipment-desc"></p>
+      </figure>
+    </section>
+  </main>
+
+  <script id="bootstrap-data" type="application/json">
+    {{ {"elements": elements, "equipment": equipment} | tojson }}
+  </script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
