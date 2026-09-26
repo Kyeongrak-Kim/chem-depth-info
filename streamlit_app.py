@@ -44,15 +44,16 @@ eq = EQUIPMENT[eq_key]
 energy = st.session_state.get(f"energy-{eq_key}", float(eq.default_energy))
 shots = st.session_state.get(f"shots-{eq_key}", int(eq.default_shots))
 
-st.markdown(
+# st.markdown turns every <a> into target=_blank. st.html keeps clicks in this tab.
+st.html(
     f'<section class="cd-panel">{periodic_table_html(elements, symbol, eq_key)}</section>',
-    unsafe_allow_html=True,
+    width="stretch",
 )
 
 controls, results = st.columns((0.95, 1.05), gap="medium")
 
 with controls:
-    st.markdown(equipment_html(catalog, eq_key, symbol), unsafe_allow_html=True)
+    st.html(equipment_html(catalog, eq_key, symbol), width="stretch")
     st.markdown(energy_head_html(energy, eq.energy_label, eq.energy_unit), unsafe_allow_html=True)
     energy = st.slider(
         eq.energy_label,
