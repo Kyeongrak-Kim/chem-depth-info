@@ -129,6 +129,7 @@ def test_periodic_table_html_marks_selection():
     assert html.count('class="cd-element') == 118
     assert "selected" in html
     assert "?el=Fe&eq=sims" in html
+    assert 'target="_self"' in html
     assert "비금속" in html
 
 
@@ -136,6 +137,7 @@ def test_equipment_html_marks_active():
     html = equipment_html(equipment_catalog(), "xps", "Si")
     assert "cd-eq active" in html
     assert "?el=Si&eq=xps" in html
+    assert 'target="_self"' in html
     assert "EDS" in html
     assert "EPMA (WDS)" in html
     assert "LDI-MS" in html

@@ -247,6 +247,10 @@ def _href(symbol: str, equipment: str) -> str:
     return f"?el={html.escape(symbol, quote=True)}&eq={html.escape(equipment, quote=True)}"
 
 
+# Streamlit's markdown renderer opens every <a> in a new tab unless target is set.
+_SAME_TAB = 'target="_self"'
+
+
 def header_html() -> str:
     return (
         '<header class="cd-header">'
@@ -268,7 +272,7 @@ def periodic_table_html(elements: Iterable[dict], selected_symbol: str, equipmen
             f'<a class="cd-element cat-{html.escape(el["category"])}{selected}" '
             f'style="grid-row:{int(el["row"])};grid-column:{int(el["col"])};'
             f'color:#0b1020!important;text-decoration:none"'
-            f' href="{_href(el["symbol"], equipment_key)}" title="{title}">'
+            f' href="{_href(el["symbol"], equipment_key)}" {_SAME_TAB} title="{title}">'
             f'<span class="num" style="color:#0b1020!important">{int(el["number"])}</span>'
             f'<span class="sym" style="color:#0b1020!important">{html.escape(el["symbol"])}</span></a>'
         )
@@ -295,7 +299,7 @@ def equipment_html(equipment: Iterable[dict], selected_key: str, symbol: str) ->
         active = " active" if eq["key"] == selected_key else ""
         probe = PROBE_LABELS.get(eq["probe"], eq["probe"])
         cards.append(
-            f'<a class="cd-eq{active}" href="{_href(symbol, eq["key"])}" '
+            f'<a class="cd-eq{active}" href="{_href(symbol, eq["key"])}" {_SAME_TAB} '
             f'style="color:#eef2fb!important;text-decoration:none">'
             f'<span class="eq-probe">{html.escape(probe)}</span>'
             f'<span class="eq-name">{html.escape(eq["name"])}</span>'
