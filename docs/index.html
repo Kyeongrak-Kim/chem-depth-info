@@ -34,33 +34,18 @@
     </section>
 
     <section class="panel control-panel">
-      <div class="panel-title"><h2>2 · 분석 장비</h2></div>
-      <div id="equipment-list" class="equipment-list" role="radiogroup"></div>
-
-      <div class="energy-block">
-        <div class="energy-head">
-          <h3 id="energy-title">3 · 빔 에너지</h3>
-          <span id="energy-readout" class="pill pill-accent">— keV</span>
-        </div>
-        <input type="range" id="energy-slider" min="0" max="1" step="0.01" value="0" />
-        <div class="energy-scale"><span id="energy-min">—</span><span id="energy-max">—</span></div>
+      <div class="panel-title">
+        <h2>2 · 분석 장비</h2>
+        <span class="hint">여러 개 선택 · 다시 누르면 해제</span>
       </div>
-
-      <div class="shots-block" id="shots-block" hidden>
-        <div class="energy-head">
-          <h3>4 · Shot 수</h3>
-          <span id="shots-readout" class="pill pill-accent">—</span>
-        </div>
-        <input type="range" id="shots-slider" min="1" max="100" step="1" value="1" />
-        <div class="energy-scale"><span id="shots-min">—</span><span id="shots-max">—</span></div>
-      </div>
-
+      <div id="equipment-list" class="equipment-list" role="group"></div>
+      <div id="control-stack"></div>
       <p id="equipment-desc" class="equipment-desc"></p>
     </section>
 
     <section class="panel result-panel">
       <div class="panel-title"><h2>결과</h2></div>
-      <div class="metrics">
+      <div class="metrics" id="metrics">
         <div class="metric">
           <span class="metric-label" id="m-depth-label">침투 깊이</span>
           <span class="metric-value" id="m-depth">—</span>
@@ -82,6 +67,7 @@
           <span class="metric-value" id="m-crater">—</span>
         </div>
       </div>
+      <ul id="compare-legend" class="compare-legend" hidden></ul>
       <figure class="viz">
         <canvas id="viz-canvas" width="640" height="360" aria-label="단면 시각화"></canvas>
         <figcaption id="viz-caption">원소와 장비를 선택하면 단면이 그려집니다.</figcaption>
@@ -91,6 +77,7 @@
   </main>
 
   <script src="js/simulation.js"></script>
+  <script src="js/workspace.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

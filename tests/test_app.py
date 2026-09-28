@@ -7,6 +7,8 @@ import pytest
 
 from app import create_app
 from app.display import (
+    comparison_html,
+    comparison_svg,
     cross_section_svg,
     equipment_html,
     format_length,
@@ -213,6 +215,62 @@ def test_api_simulate_with_shots(client):
     assert body["shots"] == 40
     assert body["energy_unit"] == "mJ"
     assert body["probe"] == "laser"
+
+
+def test_comparison_svg_shares_one_length_scale():
+    import re
+
+    epma = simulate(SI, "epma")
+    libs = simulate(SI, "libs")
+    svg = comparison_svg([epma, libs])
+    found = {
+        key: (float(half), float(depth))
+        for key, half, depth in re.findall(
+            r'data-key="(\w+)" data-bottom="[0-9.]+" data-half="([0-9.]+)" data-depth-px="([0-9.]+)"',
+            svg,
+        )
+    }
+    assert set(found) == {"epma", "libs"}
+    width_ratio = libs["width_um"] / epma["width_um"]
+    depth_ratio = libs["depth_um"] / epma["depth_um"]
+    assert found["libs"][0] / found["epma"][0] == pytest.approx(width_ratio, rel=0.02)
+    assert found["libs"][1] / found["epma"][1] == pytest.approx(depth_ratio, rel=0.02)
+    px_from_depth = found["libs"][1] / libs["depth_um"]
+    px_from_width = found["libs"][0] / (libs["width_um"] / 2)
+    assert px_from_depth == pytest.approx(px_from_width, rel=0.02)
+    page = comparison_html([epma, libs], "Si")
+    assert "동일 스케일" in page
+    assert "EPMA (WDS)" in page
+    assert "LIBS" in page
+
+
+def test_workspace_keeps_scroll_and_compares():
+    root = os.path.join(os.path.dirname(__file__), "..")
+    workspace = open(os.path.join(root, "app", "static", "js", "workspace.js"), encoding="utf-8").read()
+    assert "eqs.length === 1" in workspace
+    assert "function drawCompare" in workspace
+    assert 'type = "button"' in workspace or 'type = "button"' in workspace or 'cell.type = "button"' in workspace
+    assert "location" not in workspace
+    for rel in (
+        "docs/js/workspace.js",
+        "app/picker/workspace.js",
+        "docs/css/style.css",
+        "app/picker/style.css",
+        "app/picker/simulation.js",
+    ):
+        copied = os.path.join(root, rel)
+        assert os.path.isfile(copied), rel
+    assert open(os.path.join(root, "docs/js/workspace.js"), encoding="utf-8").read() == workspace
+    assert open(os.path.join(root, "app/picker/workspace.js"), encoding="utf-8").read() == workspace
+    assert open(os.path.join(root, "docs/css/style.css"), encoding="utf-8").read() == open(
+        os.path.join(root, "app/static/css/style.css"), encoding="utf-8"
+    ).read()
+    assert open(os.path.join(root, "app/picker/style.css"), encoding="utf-8").read() == open(
+        os.path.join(root, "app/static/css/style.css"), encoding="utf-8"
+    ).read()
+    assert open(os.path.join(root, "app/picker/simulation.js"), encoding="utf-8").read() == open(
+        os.path.join(root, "docs/js/simulation.js"), encoding="utf-8"
+    ).read()
 
 
 def test_api_simulate_bad_shots(client):

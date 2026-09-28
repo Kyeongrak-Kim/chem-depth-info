@@ -212,6 +212,29 @@ body {
 #energy-slider, #shots-slider { width: 100%; accent-color: var(--accent); }
 .energy-scale { display: flex; justify-content: space-between; font-size: clamp(0.64rem, 1.05vw, 0.74rem); color: var(--text-dim); margin-top: 2px; }
 .equipment-desc { font-size: clamp(0.74rem, 1.2vw, 0.84rem); color: var(--text-dim); margin: 12px 0 0; line-height: 1.45; }
+.panel-title .hint { color: var(--text-dim); font-size: clamp(0.72rem, 1.2vw, 0.82rem); }
+.control-card {
+  margin-top: 12px;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(8, 13, 28, 0.35);
+}
+.control-card + .control-card { margin-top: 8px; }
+.control-card input[type="range"] { width: 100%; accent-color: var(--accent); }
+.compare-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 10px 0 0;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: clamp(0.72rem, 1.2vw, 0.84rem);
+}
+.compare-legend[hidden], #metrics[hidden] { display: none; }
+.compare-legend li { display: flex; align-items: center; gap: 6px; }
+.compare-legend .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 
 .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .metric {

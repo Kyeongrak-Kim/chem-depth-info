@@ -226,6 +226,11 @@ STREAMLIT_CSS = """
     border: 1px solid #2a3760; border-radius: 12px; display: block;
   }
   .cd-viz figcaption { font-size: clamp(0.68rem, 1.1vw, 0.78rem); color: #9aa6c4; margin-top: 8px; text-align: center; line-height: 1.4; }
+  .cd-compare { margin-top: 8px; }
+  .cd-compare svg { width: 100%; height: auto; background: #070c1a; border: 1px solid #2a3760; border-radius: 12px; display: block; }
+  .cd-compare-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 12px 0 0; margin: 0; color: #9aa6c4; font-size: clamp(0.72rem, 1.2vw, 0.84rem); }
+  .cd-compare-legend li { display: flex; align-items: center; gap: 6px; }
+  .cd-compare-legend .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 
   @media (max-width: 720px) {
     .cd-periodic { gap: 1.5px; }
@@ -466,3 +471,108 @@ def cross_section_svg(result: dict) -> str:
   {crater}
 </svg>
 """
+
+
+COMPARE_COLORS = (
+    "#f6a94b",
+    "#5ad1c8",
+    "#8eb6ff",
+    "#ff8fb8",
+    "#d2f58a",
+    "#e2b0ff",
+    "#ffd166",
+    "#7ee0d0",
+    "#ffb088",
+    "#c5d4ff",
+)
+
+
+def _volume_path(cx: float, surface_y: float, half: float, depth_px: float, neck: float, shape: str) -> str:
+    bottom = surface_y + depth_px
+    if depth_px < 0.4 and half < 0.4:
+        return f"M {cx - 0.6} {surface_y} L {cx + 0.6} {surface_y} L {cx} {surface_y + 0.8} Z"
+    if shape == "pear":
+        belly = surface_y + depth_px * 0.55
+        neck = max(0.4, min(neck, half * 0.85))
+        return (
+            f"M {cx - neck} {surface_y} "
+            f"C {cx - neck} {surface_y + depth_px * 0.16}, {cx - half} {surface_y + depth_px * 0.30}, {cx - half} {belly} "
+            f"C {cx - half} {surface_y + depth_px * 0.82}, {cx - half * 0.42} {bottom}, {cx} {bottom} "
+            f"C {cx + half * 0.42} {bottom}, {cx + half} {surface_y + depth_px * 0.82}, {cx + half} {belly} "
+            f"C {cx + half} {surface_y + depth_px * 0.30}, {cx + neck} {surface_y + depth_px * 0.16}, {cx + neck} {surface_y} Z"
+        )
+    if shape == "beam":
+        inset = half * 0.9
+        return (
+            f"M {cx - half} {surface_y} L {cx - inset} {bottom} "
+            f"L {cx + inset} {bottom} L {cx + half} {surface_y} Z"
+        )
+    return (
+        f"M {cx - half} {surface_y} "
+        f"C {cx - half} {surface_y + depth_px * 0.7}, {cx - half * 0.4} {bottom}, {cx} {bottom} "
+        f"C {cx + half * 0.4} {bottom}, {cx + half} {surface_y + depth_px * 0.7}, {cx + half} {surface_y} Z"
+    )
+
+
+def comparison_svg(results: list[dict]) -> str:
+    """Overlay every result on one isotropic micrometre scale."""
+    width, height = 960, 460
+    margin_l, margin_r, margin_t, margin_b = 86, 28, 36, 28
+    plot_w = width - margin_l - margin_r
+    plot_h = height - margin_t - margin_b
+    max_depth = max((float(r["depth_um"]) for r in results), default=1.0) or 1.0
+    max_half = max((float(r["width_um"]) / 2.0 for r in results), default=1.0) or 1.0
+    span = max(max_depth, max_half, 1e-6)
+    px = min(plot_h / span, (plot_w / 2.0) / span)
+    cx = margin_l + plot_w / 2.0
+    surface_y = float(margin_t)
+    axis_bottom = surface_y + max_depth * px
+
+    paths = []
+    indexed = list(enumerate(results))
+    for index, result in sorted(indexed, key=lambda item: float(item[1]["depth_um"]), reverse=True):
+        color = COMPARE_COLORS[index % len(COMPARE_COLORS)]
+        half = max(0.8, (float(result["width_um"]) / 2.0) * px)
+        depth_px = max(0.8, float(result["depth_um"]) * px)
+        beam = float(result.get("beam_diameter_um") or result["width_um"])
+        neck = max(0.4, (beam / 2.0) * px)
+        bottom = surface_y + depth_px
+        path = _volume_path(cx, surface_y, half, depth_px, neck, result.get("volume_shape", "spot"))
+        paths.append(
+            f'<path data-key="{html.escape(str(result["equipment"]))}" data-bottom="{bottom:.2f}" '
+            f'data-half="{half:.2f}" data-depth-px="{depth_px:.2f}" '
+            f'd="{path}" fill="{color}" fill-opacity="0.42" stroke="{color}" stroke-width="1.7"/>'
+        )
+
+    return f"""
+<svg viewBox="0 0 {width} {height}" width="100%" role="img" aria-label="동일 스케일 단면 비교">
+  <rect x="{margin_l}" y="{margin_t}" width="{plot_w}" height="{plot_h}" fill="#111a33" stroke="#2b3a66"/>
+  <line x1="{margin_l}" y1="{surface_y}" x2="{width - margin_r}" y2="{surface_y}" stroke="#5ad1c8" stroke-width="2"/>
+  <text x="{margin_l}" y="{surface_y - 10}" fill="#9aa6c4" font-size="13">표면</text>
+  <line x1="{cx}" y1="{surface_y}" x2="{cx}" y2="{axis_bottom}" stroke="#e8ecf7" stroke-dasharray="3 3"/>
+  <text x="8" y="{axis_bottom}" fill="#e8ecf7" font-size="13">최대 깊이 {format_length(max_depth)}</text>
+  {''.join(paths)}
+</svg>
+"""
+
+
+def comparison_html(results: list[dict], symbol: str) -> str:
+    items = []
+    for index, result in enumerate(results):
+        color = COMPARE_COLORS[index % len(COMPARE_COLORS)]
+        items.append(
+            "<li>"
+            f'<span class="swatch" style="background:{color}"></span>'
+            f'{html.escape(result["equipment_name"])} · 깊이 {html.escape(format_length(result["depth_um"]))} · '
+            f'폭 {html.escape(format_length(result["width_um"]))}'
+            "</li>"
+        )
+    return (
+        '<section class="cd-compare">'
+        '<div class="cd-panel-title"><h2>비교 · 동일 스케일</h2></div>'
+        f'<p class="cd-desc">{html.escape(symbol)}에서 고른 장비입니다. '
+        "가로와 세로는 같은 길이 눈금이라, 더 깊은 방법이 실제로 더 길게 내려갑니다.</p>"
+        f"{comparison_svg(results)}"
+        f'<ul class="cd-compare-legend">{"".join(items)}</ul>'
+        "</section>"
+    )
