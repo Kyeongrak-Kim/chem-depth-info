@@ -69,7 +69,11 @@
 
     function reportFrameHeight() {
       const height = Math.ceil(document.documentElement.scrollHeight) + 8;
-      window.parent.postMessage({ type: "streamlit:setFrameHeight", height }, "*");
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setFrameHeight",
+        height,
+      }, "*");
     }
     window.reportFrameHeight = reportFrameHeight;
 
@@ -103,7 +107,11 @@
     if (window.ResizeObserver) {
       new ResizeObserver(() => reportFrameHeight()).observe(document.body);
     }
-    window.parent.postMessage({ type: "streamlit:componentReady", apiVersion: 1 }, "*");
+    window.parent.postMessage({
+      isStreamlitMessage: true,
+      type: "streamlit:componentReady",
+      apiVersion: 1,
+    }, "*");
   </script>
 </body>
 </html>
