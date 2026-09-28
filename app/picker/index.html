@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { min-height: 0; }
+    .layout { max-width: none; }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section class="panel table-panel" aria-label="주기율표">
+      <div class="panel-title">
+        <h2>1 · 원소 선택</h2>
+        <span id="selected-label" class="pill">—</span>
+      </div>
+      <div id="periodic-table" class="periodic-table" role="grid"></div>
+      <ul class="legend" id="legend"></ul>
+    </section>
+
+    <section class="panel control-panel">
+      <div class="panel-title">
+        <h2>2 · 분석 장비</h2>
+        <span class="hint">여러 개 선택 · 다시 누르면 해제</span>
+      </div>
+      <div id="equipment-list" class="equipment-list" role="group"></div>
+      <div id="control-stack"></div>
+      <p id="equipment-desc" class="equipment-desc"></p>
+    </section>
+
+    <section class="panel result-panel">
+      <div class="panel-title"><h2>결과</h2></div>
+      <div class="metrics" id="metrics">
+        <div class="metric">
+          <span class="metric-label" id="m-depth-label">침투 깊이</span>
+          <span class="metric-value" id="m-depth">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label" id="m-width-label">분석 폭</span>
+          <span class="metric-value" id="m-width">—</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">종횡비 (깊이/폭)</span>
+          <span class="metric-value" id="m-aspect">—</span>
+        </div>
+        <div class="metric" id="shots-metric" hidden>
+          <span class="metric-label">Shot 수</span>
+          <span class="metric-value" id="m-shots">—</span>
+        </div>
+        <div class="metric" id="crater-metric" hidden>
+          <span class="metric-label" id="crater-label">크레이터 깊이</span>
+          <span class="metric-value" id="m-crater">—</span>
+        </div>
+      </div>
+      <ul id="compare-legend" class="compare-legend" hidden></ul>
+      <figure class="viz">
+        <canvas id="viz-canvas" width="640" height="360" aria-label="단면 시각화"></canvas>
+        <figcaption id="viz-caption">원소와 장비를 선택하면 단면이 그려집니다.</figcaption>
+        <p id="model-note" class="equipment-desc"></p>
+      </figure>
+    </section>
+  </main>
+  <script src="simulation.js"></script>
+  <script src="workspace.js"></script>
+  <script>
+    let started = false;
+
+    function reportFrameHeight() {
+      const height = Math.ceil(document.documentElement.scrollHeight) + 8;
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setFrameHeight",
+        height,
+      }, "*");
+    }
+    window.reportFrameHeight = reportFrameHeight;
+
+    window.addEventListener("message", (event) => {
+      if (!event.data || event.data.type !== "streamlit:render" || started) return;
+      const args = event.data.args || {};
+      if (!args.elements || !args.elements.length || !args.equipment || !args.equipment.length) return;
+      started = true;
+      startWorkspace({
+        elements: args.elements,
+        equipment: args.equipment,
+        computeAll(symbol, eqs, controls) {
+          const el = args.elements.find((item) => item.symbol === symbol);
+          return eqs.map((key) => {
+            const ctrl = controls[key];
+            const data = simulate(el, key, ctrl.energy, ctrl.shots);
+            data.element = {
+              symbol: el.symbol,
+              name: el.name,
+              number: el.number,
+              density: el.density,
+              atomic_mass: el.atomic_mass,
+            };
+            return data;
+          });
+        },
+      });
+      reportFrameHeight();
+    });
+
+    if (window.ResizeObserver) {
+      new ResizeObserver(() => reportFrameHeight()).observe(document.body);
+    }
+    window.parent.postMessage({
+      isStreamlitMessage: true,
+      type: "streamlit:componentReady",
+      apiVersion: 1,
+    }, "*");
+  </script>
+</body>
+</html>
